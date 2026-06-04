@@ -1,0 +1,18 @@
+{
+  "poll_interval_sec": 1.0,
+  "debounce_ms": 80,
+  "http_timeout": 10,
+  "ws_ping_interval": 10,
+  "ws_ping_timeout": 10,
+  "reconnect_delay_sec": 3,
+  "state_file": "logs/state.json",
+  "alert_cooldown_sec": 60,
+  "sync_timeout_warn_sec": 3,
+  "max_position_deviation": "0",
+  "dry_run": true,
+  "log_level": "INFO",
+  "max_concurrent_adjustments": 20,
+  "min_reload_interval_sec": 1,
+  "order_retry_times": 3,
+  "order_retry_delay_sec": 0.5
+}

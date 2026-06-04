@@ -1,0 +1,47 @@
+{
+  "accounts": {
+    "gate_master_1": {
+      "exchange": "gate",
+      "api_key": "YOUR_GATE_API_KEY",
+      "api_secret": "YOUR_GATE_API_SECRET",
+      "user_id": "YOUR_GATE_UID",
+      "base_url": "https://api.gateio.ws/api/v4",
+      "ws_url": "wss://fx-ws.gateio.ws/v4/ws/usdt"
+    },
+    "gate_sub_1": {
+      "exchange": "gate",
+      "api_key": "",
+      "api_secret": "",
+      "base_url": "https://api.gateio.ws/api/v4"
+    },
+    "gate_sub_2": {
+      "exchange": "gate",
+      "api_key": "",
+      "api_secret": "",
+      "base_url": "https://api.gateio.ws/api/v4"
+    },
+    "websea_master_1": {
+      "exchange": "websea",
+      "token": "YOUR_WEBSEA_TOKEN",
+      "secret_key": "YOUR_WEBSEA_SECRET",
+      "base_url": "https://oapi.websea.com"
+    },
+    "websea_sub_1": {
+      "exchange": "websea",
+      "token": "",
+      "secret_key": "",
+      "base_url": "https://oapi.websea.com"
+    },
+    "websea_sub_2": {
+      "exchange": "websea",
+      "token": "",
+      "secret_key": "",
+      "base_url": "https://oapi.websea.com"
+    }
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "",
+    "chat_id": ""
+  }
+}

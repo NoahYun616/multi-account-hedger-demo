@@ -1,0 +1,113 @@
+{
+  "units": [
+    {
+      "name": "unit_1",
+      "enabled": true,
+      "source": {
+        "account": "gate_master_1",
+        "exchange": "gate",
+        "settle": "usdt",
+        "leverage": 50,
+        "margin_mode": "cross",
+        "followers": [
+          {
+            "account": "gate_sub_1",
+            "ratio": "1",
+            "enabled": false
+          },
+          {
+            "account": "gate_sub_2",
+            "ratio": "0.5",
+            "enabled": false
+          }
+        ]
+      },
+      "hedge": {
+        "account": "websea_master_1",
+        "exchange": "websea",
+        "mode": "opposite",
+        "ratio": "1",
+        "leverage": 50,
+        "margin_mode": "cross",
+        "followers": [
+          {
+            "account": "websea_sub_1",
+            "ratio": "1",
+            "enabled": false
+          },
+          {
+            "account": "websea_sub_2",
+            "ratio": "0.5",
+            "enabled": false
+          }
+        ]
+      },
+      "symbols": [
+        {
+          "source_symbol": "BTC_USDT",
+          "hedge_symbol": "BTC-USDT",
+          "enabled": true,
+          "ratio": "0.1",
+          "source_amount_multiplier": "0.0001",
+          "hedge_amount_multiplier": "0.001",
+          "min_sync_delta": "1",
+          "source_step": "1",
+          "hedge_step": "1",
+          "source_min_qty": "1",
+          "hedge_min_qty": "1",
+          "max_source_pos": "99999999",
+          "max_hedge_pos": "99999999",
+          "max_adjust_qty": "99999999"
+        },
+        {
+          "source_symbol": "ETH_USDT",
+          "hedge_symbol": "ETH-USDT",
+          "enabled": true,
+          "ratio": "1",
+          "source_amount_multiplier": "0.01",
+          "hedge_amount_multiplier": "0.01",
+          "min_sync_delta": "1",
+          "source_step": "1",
+          "hedge_step": "1",
+          "source_min_qty": "1",
+          "hedge_min_qty": "1",
+          "max_source_pos": "99999999",
+          "max_hedge_pos": "99999999",
+          "max_adjust_qty": "99999999"
+        },
+        {
+          "source_symbol": "SOL_USDT",
+          "hedge_symbol": "SOL-USDT",
+          "enabled": true,
+          "ratio": "10",
+          "source_amount_multiplier": "1",
+          "hedge_amount_multiplier": "0.1",
+          "min_sync_delta": "1",
+          "source_step": "1",
+          "hedge_step": "1",
+          "source_min_qty": "1",
+          "hedge_min_qty": "1",
+          "max_source_pos": "99999999",
+          "max_hedge_pos": "99999999",
+          "max_adjust_qty": "99999999"
+        },
+        {
+          "source_symbol": "BNB_USDT",
+          "hedge_symbol": "BNB-USDT",
+          "enabled": true,
+          "ratio": "0.1",
+          "source_amount_multiplier": "0.01",
+          "hedge_amount_multiplier": "0.01",
+          "min_sync_delta": "1",
+          "source_step": "1",
+          "hedge_step": "1",
+          "source_min_qty": "1",
+          "hedge_min_qty": "1",
+          "max_source_pos": "99999999",
+          "max_hedge_pos": "99999999",
+          "max_adjust_qty": "99999999"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+aiohttp>=3.9,<4
+websockets>=11,<13
+certifi>=2024
+streamlit>=1.30
+pandas>=2.0
+plotly>=6.7.0
+pyinstaller>=6.6
