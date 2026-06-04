@@ -175,6 +175,9 @@ I18N = {
         "正常": "Normal",
         "阻断": "Blocked",
         "未检测": "Unknown",
+        "系统状态": "System Status",
+        "后端同步引擎需单独运行。这里集中查看配置检查和日志状态。": "The backend sync engine runs separately. Config checks and log status are grouped here.",
+        "用于判断同步引擎是否已经产生运行日志或状态文件。": "Use this to see whether the sync engine has produced log or state files.",
         "最近更新": "Last Update",
         "未发现运行日志": "No runtime log found",
         "真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。": "Live trading mode is enabled. This page does not place orders, but the backend engine may submit real orders.",
@@ -404,28 +407,32 @@ def inject_theme():
         """
         <style>
         :root {
-          --bg: #F6F8FA;
+          --bg: #F8FAFC;
           --panel: #FFFFFF;
-          --panel-soft: #F8FAFC;
-          --line: #E5E7EB;
-          --line-strong: #CBD5E1;
+          --panel-strong: #FFFFFF;
+          --panel-soft: #F3F6F8;
+          --line: #EEF2F7;
+          --line-strong: #E5E7EB;
           --text: #111827;
           --muted: #6B7280;
-          --muted-light: #9CA3AF;
-          --accent: #2563EB;
-          --accent-soft: #EFF6FF;
-          --accent-text: #1D4ED8;
-          --danger: #DC2626;
-          --danger-soft: #FEF2F2;
+          --muted-light: #94A3B8;
+          --accent: #14B8A6;
+          --accent-soft: #ECFDF8;
+          --accent-text: #0F766E;
+          --danger: #E11D48;
+          --danger-soft: #FFF1F2;
           --warning: #D97706;
           --warning-soft: #FFF7ED;
-          --ok: #16A34A;
-          --ok-soft: #ECFDF3;
+          --ok: #059669;
+          --ok-soft: #ECFDF5;
           --paused: #6B7280;
         }
 
         .stApp {
-          background: var(--bg);
+          background:
+            radial-gradient(circle at 58% 6%, rgba(20, 184, 166, .11), transparent 34rem),
+            radial-gradient(circle at 92% 28%, rgba(59, 130, 246, .07), transparent 28rem),
+            var(--bg);
           color: var(--text);
         }
 
@@ -461,17 +468,17 @@ def inject_theme():
           z-index: 1000001 !important;
           width: 32px !important;
           height: 32px !important;
-          border: 1px solid var(--line) !important;
+          border: 1px solid var(--line-strong) !important;
           border-radius: 8px !important;
           background: #ffffff !important;
           color: var(--text) !important;
-          box-shadow: 0 8px 24px rgba(15, 23, 42, .10) !important;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, .10) !important;
         }
 
         .block-container {
-          padding-top: 1rem;
+          padding-top: 1.1rem;
           padding-bottom: 3rem;
-          max-width: 1440px;
+          max-width: 1280px;
         }
 
         section[data-testid="stSidebar"] {
@@ -487,13 +494,14 @@ def inject_theme():
         section[data-testid="stSidebar"] h1 {
           font-size: 1.35rem;
           color: var(--text);
-          margin-bottom: .25rem;
+          margin-bottom: .1rem;
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label {
-          border-radius: 6px;
-          padding: .35rem .45rem;
-          margin-bottom: .15rem;
+          border-radius: 12px;
+          padding: .45rem .55rem;
+          margin-bottom: .2rem;
+          border: 1px solid transparent;
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label,
@@ -504,7 +512,8 @@ def inject_theme():
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
-          background: var(--panel-soft);
+          background: var(--accent-soft);
+          border-color: #CCFBF1;
         }
 
         label,
@@ -526,19 +535,18 @@ def inject_theme():
         .app-header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           gap: 1rem;
-          padding: 1rem 1.1rem;
-          border: 1px solid var(--line);
-          border-radius: 8px;
-          background: var(--panel);
-          margin-bottom: 1rem;
+          padding: .15rem 0 1rem;
+          border: 0;
+          background: transparent;
+          margin-bottom: .15rem;
         }
 
         .app-title {
           font-size: 1.45rem;
           line-height: 1.2;
-          font-weight: 700;
+          font-weight: 760;
           color: var(--text);
           margin: 0;
           letter-spacing: 0;
@@ -555,61 +563,63 @@ def inject_theme():
           flex-wrap: wrap;
           gap: .45rem;
           justify-content: flex-end;
-          max-width: 780px;
+          max-width: 520px;
         }
 
         .status-pill {
           display: inline-flex;
           align-items: center;
           min-height: 28px;
-          border-radius: 999px;
-          padding: .25rem .65rem;
+          border-radius: 12px;
+          padding: .28rem .7rem;
           font-size: .78rem;
           font-weight: 650;
           border: 1px solid var(--line);
-          background: var(--panel-soft);
+          background: var(--panel);
           color: var(--text);
           white-space: nowrap;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
         }
 
         .status-pill.ok {
           color: var(--ok);
           background: var(--ok-soft);
-          border-color: #abefc6;
+          border-color: #BBF7D0;
         }
 
         .status-pill.warn {
           color: var(--warning);
           background: var(--warning-soft);
-          border-color: #fedf89;
+          border-color: #FED7AA;
         }
 
         .status-pill.danger {
           color: var(--danger);
           background: var(--danger-soft);
-          border-color: #fecdca;
+          border-color: #FECDD3;
         }
 
         .status-pill.info {
           color: var(--accent-text);
           background: var(--accent-soft);
-          border-color: #BFDBFE;
+          border-color: #CCFBF1;
         }
 
         .mode-banner {
           display: flex;
           align-items: flex-start;
           gap: .65rem;
-          border-radius: 8px;
-          padding: .75rem .9rem;
+          border-radius: 14px;
+          padding: .85rem 1rem;
           border: 1px solid var(--line);
           background: var(--panel);
           margin-bottom: 1rem;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
         }
 
         .mode-banner.danger {
           background: var(--danger-soft);
-          border-color: #FCA5A5;
+          border-color: #FDA4AF;
           color: var(--danger);
         }
 
@@ -630,7 +640,7 @@ def inject_theme():
         }
 
         .section-heading {
-          margin-top: 1.15rem;
+          margin-top: 1.25rem;
           margin-bottom: .45rem;
           font-size: 1.05rem;
           font-weight: 700;
@@ -647,15 +657,16 @@ def inject_theme():
         .panel {
           border: 1px solid var(--line);
           background: var(--panel);
-          border-radius: 8px;
+          border-radius: 16px;
           padding: .9rem;
           margin-bottom: 1rem;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .04), 0 10px 30px rgba(15, 23, 42, .03);
         }
 
         .danger-panel {
           border: 1px solid #FCA5A5;
           background: var(--danger-soft);
-          border-radius: 8px;
+          border-radius: 14px;
           padding: .9rem;
           margin: .75rem 0 1rem;
         }
@@ -674,19 +685,21 @@ def inject_theme():
         .metric-band {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: .75rem;
-          margin-bottom: 1rem;
+          gap: .8rem;
+          margin-bottom: 1.1rem;
         }
 
         .metric-tile {
           background: var(--panel);
           border: 1px solid var(--line);
-          border-radius: 8px;
-          padding: .85rem .9rem;
+          border-radius: 16px;
+          padding: 1rem;
+          min-height: 100px;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .05), 0 10px 30px rgba(15, 23, 42, .04);
         }
 
         .metric-tile.danger {
-          border-color: #FCA5A5;
+          border-color: #FECDD3;
           background: var(--danger-soft);
         }
 
@@ -708,7 +721,7 @@ def inject_theme():
 
         .metric-value {
           color: var(--text);
-          font-size: 1.35rem;
+          font-size: 1.42rem;
           font-weight: 750;
           line-height: 1.15;
         }
@@ -721,9 +734,9 @@ def inject_theme():
 
         div[data-testid="stExpander"] {
           border: 1px solid var(--line);
-          border-radius: 8px;
+          border-radius: 16px;
           background: var(--panel);
-          box-shadow: none;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
         }
 
         div[data-testid="stExpander"] details summary {
@@ -744,10 +757,11 @@ def inject_theme():
 
         .ws-table-wrap {
           border: 1px solid var(--line);
-          border-radius: 8px;
+          border-radius: 14px;
           overflow-x: auto;
           background: var(--panel);
           margin: .65rem 0 1rem;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
         }
 
         table.ws-table {
@@ -758,7 +772,7 @@ def inject_theme():
         }
 
         table.ws-table thead th {
-          background: #F1F5F9;
+          background: #F8FAFC;
           color: #374151;
           font-weight: 720;
           text-align: left;
@@ -769,7 +783,7 @@ def inject_theme():
 
         table.ws-table tbody td {
           padding: .6rem .7rem;
-          border-bottom: 1px solid #EEF2F7;
+          border-bottom: 1px solid #F1F5F9;
           vertical-align: top;
         }
 
@@ -778,7 +792,7 @@ def inject_theme():
         }
 
         table.ws-table tbody tr:hover td {
-          background: #F8FAFC;
+          background: #F9FEFC;
         }
 
         div[data-testid="stAlert"] {
@@ -918,13 +932,10 @@ def risk_summary(accounts_data, strategy_data, global_data):
 def render_mode_banner(global_data):
     dry_run = bool(global_data.get("dry_run", True))
     if dry_run:
-        title = tr("模拟下单")
-        copy = tr("模拟运行中。当前配置默认不会真实下单。")
-        cls = "ok"
-    else:
-        title = tr("真实下单")
-        copy = tr("真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。")
-        cls = "danger"
+        return
+    title = tr("真实下单")
+    copy = tr("真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。")
+    cls = "danger"
     st.markdown(
         f"""
         <div class="mode-banner {cls}">
@@ -938,6 +949,58 @@ def render_mode_banner(global_data):
     )
 
 
+def mode_label(global_data):
+    return tr("模拟下单") if bool(global_data.get("dry_run", True)) else tr("真实下单")
+
+
+def runtime_health_label(global_data):
+    log_path = Path("logs/system.log")
+    state_path = Path(global_data.get("state_file", "logs/state.json"))
+    if log_path.exists() or state_path.exists():
+        return tr("正常")
+    return tr("未检测")
+
+
+def dashboard_metrics(accounts_data, strategy_data, global_data):
+    units = strategy_data.get("units", [])
+    enabled_units = sum(1 for unit in units if unit.get("enabled", True))
+    symbol_count = sum(len(unit.get("symbols", [])) for unit in units)
+    checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
+    blocker_count = int((checks["状态"] == "ERROR").sum()) if not checks.empty else 0
+    dry_run = bool(global_data.get("dry_run", True))
+    if dry_run:
+        mode_cls = "ok"
+    else:
+        mode_cls = "danger"
+    runtime_label = runtime_health_label(global_data)
+    return [
+        {
+            "label": tr("运行模式"),
+            "value": mode_label(global_data),
+            "class": mode_cls,
+            "help": tr("模拟运行中。当前配置默认不会真实下单。") if dry_run else tr("真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。"),
+        },
+        {
+            "label": tr("配置检查"),
+            "value": tr("阻断") if blocker_count else tr("正常"),
+            "class": "danger" if blocker_count else "ok",
+            "help": f"{blocker_count} blocker" if blocker_count else tr("启用策略账号的基础配置检查通过。"),
+        },
+        {
+            "label": tr("运行健康"),
+            "value": runtime_label,
+            "class": "" if runtime_label == tr("未检测") else "ok",
+            "help": tr("未发现运行日志") if runtime_label == tr("未检测") else tr("最近更新"),
+        },
+        {
+            "label": tr("交易对"),
+            "value": symbol_count,
+            "class": "",
+            "help": f"{tr('策略单元')} {enabled_units}",
+        },
+    ]
+
+
 def render_danger_panel(title, copy):
     st.markdown(
         f"""
@@ -948,28 +1011,6 @@ def render_danger_panel(title, copy):
         """,
         unsafe_allow_html=True,
     )
-
-
-def dashboard_metrics(accounts_data, strategy_data, global_data):
-    accounts = accounts_data.get("accounts", {})
-    units = strategy_data.get("units", [])
-    enabled_accounts = sum(1 for cfg in accounts.values() if cfg.get("enabled", True))
-    enabled_units = sum(1 for unit in units if unit.get("enabled", True))
-    symbol_count = sum(len(unit.get("symbols", [])) for unit in units)
-    dry_run = bool(global_data.get("dry_run", True))
-    checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
-    blocker_count = int((checks["状态"] == "ERROR").sum()) if not checks.empty else 0
-    return [
-        {"label": tr("启用账号"), "value": enabled_accounts, "class": ""},
-        {"label": tr("策略单元"), "value": enabled_units, "class": ""},
-        {"label": tr("交易对"), "value": symbol_count, "class": ""},
-        {
-            "label": tr("配置检查"),
-            "value": tr("阻断") if blocker_count else tr("正常"),
-            "class": "danger" if blocker_count else "ok",
-            "help": f"{blocker_count} blocker" if blocker_count else "",
-        },
-    ]
 
 
 def used_strategy_accounts(strategy_data):
@@ -1071,13 +1112,18 @@ def render_app_header(page, accounts_data, strategy_data, global_data):
     title, subtitle = PAGE_META.get(page, (page, ""))
     risk = risk_summary(accounts_data, strategy_data, global_data)
     dry_run = risk["dry_run"]
-    enabled_accounts = sum(1 for cfg in accounts_data.get("accounts", {}).values() if cfg.get("enabled", True))
-    enabled_units = sum(1 for unit in strategy_data.get("units", []) if unit.get("enabled", True))
     mode_class = "ok" if dry_run else "danger"
     mode_text = tr("模拟下单") if dry_run else tr("真实下单")
     check_class = "danger" if risk["has_blocker"] else "ok"
     check_text = f"{tr('配置检查')}：{tr('阻断') if risk['has_blocker'] else tr('正常')}"
-    risk_text = f"{tr('最高风险')}：{tr(risk['level'])}"
+    if page == "分组总览":
+        status_html = status_pill(f"{tr('最近更新')}：{risk['updated']}", "info")
+    else:
+        status_html = "".join([
+            status_pill(mode_text, mode_class),
+            status_pill(check_text, check_class),
+            status_pill(f"{tr('最近更新')}：{risk['updated']}", "info"),
+        ])
     html = f"""
     <div class="app-header">
       <div>
@@ -1085,12 +1131,7 @@ def render_app_header(page, accounts_data, strategy_data, global_data):
         <div class="app-subtitle">{esc(tr(subtitle))}</div>
       </div>
       <div class="status-row">
-        {status_pill(mode_text, mode_class)}
-        {status_pill(check_text, check_class)}
-        {status_pill(risk_text, risk["class"])}
-        {status_pill(f"{tr('最近更新')}：{risk['updated']}", "info")}
-        {status_pill(f"{tr('启用账号')} {enabled_accounts}", "")}
-        {status_pill(f"{tr('策略单元')} {enabled_units}", "")}
+        {status_html}
       </div>
     </div>
     """
@@ -1790,24 +1831,12 @@ def main():
         st.session_state["language"] = LANGUAGE_OPTIONS[selected_language]
         st.caption(tr("Gate + Websea 仓位跟随控制台"))
         page = st.radio(tr("选择页面"), PAGES, format_func=page_label)
-        st.divider()
-        st.caption(tr("当前状态"))
-        side_risk = risk_summary(accounts_data, strategy_data, global_data)
-        st.markdown(
-            " ".join([
-                status_pill(tr("模拟下单") if side_risk["dry_run"] else tr("真实下单"), "ok" if side_risk["dry_run"] else "danger"),
-                status_pill(f"{tr('最高风险')}：{tr(side_risk['level'])}", side_risk["class"]),
-            ]),
-            unsafe_allow_html=True,
-        )
-        st.caption(f"{tr('启用账号')}：{sum(1 for cfg in accounts_data.get('accounts', {}).values() if cfg.get('enabled', True))}")
-        st.caption(f"{tr('策略单元')}：{sum(1 for unit in strategy_data.get('units', []) if unit.get('enabled', True))}")
 
     render_app_header(page, accounts_data, strategy_data, global_data)
 
     if page == "分组总览":
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
-        render_section("运行自检", "后端同步引擎必须单独运行。这里显示启用策略涉及的账号密钥状态和日志更新时间。")
+        render_section("系统状态", "后端同步引擎需单独运行。这里集中查看配置检查和日志状态。")
         checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
         if not checks.empty and (checks["状态"] == "ERROR").any():
             st.error(tr("当前配置存在会阻断同步的问题：有启用账号缺少密钥、被禁用或不存在。"))
@@ -1817,7 +1846,7 @@ def main():
             st.info(tr("未检测"))
         else:
             render_table(checks)
-        render_section("运行健康")
+        render_section("运行健康", "用于判断同步引擎是否已经产生运行日志或状态文件。")
         render_table(log_health_row(global_data))
 
         render_section("账号配对", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。")
