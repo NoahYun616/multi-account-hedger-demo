@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import html
 import json
 import urllib.parse
 import urllib.request
@@ -26,6 +27,16 @@ LANGUAGE_OPTIONS = {
 
 PAGES = ["分组总览", "账号管理", "新增账号", "策略配置", "交易对配置", "原始配置", "使用说明"]
 
+PAGE_LABELS = {
+    "分组总览": "总览",
+    "账号管理": "账号",
+    "新增账号": "新增账号",
+    "策略配置": "策略",
+    "交易对配置": "交易对",
+    "原始配置": "原始配置",
+    "使用说明": "使用说明",
+}
+
 I18N = {
     "en": {
         "Gate + Websea 仓位跟随控制台": "Gate + Websea Position Sync Console",
@@ -44,10 +55,14 @@ I18N = {
         "交易对": "Symbols",
         "运行模式": "Run mode",
         "分组总览": "Group Overview",
+        "总览": "Overview",
         "账号管理": "Accounts",
+        "账号": "Accounts",
         "新增账号": "Add Account",
         "策略配置": "Strategy",
+        "策略": "Strategy",
         "交易对配置": "Symbols",
+        "交易对": "Symbols",
         "原始配置": "Raw Config",
         "使用说明": "Guide",
         "查看 Gate 与 Websea 的账号配对、跟随开关、实时余额和持仓。": "View Gate/Websea account pairs, follow switches, live balances, and positions.",
@@ -154,6 +169,18 @@ I18N = {
         "保存 Websea": "Save Websea",
         "已保存 Websea 跟随配置": "Websea follow config saved",
         "这一组没有 Websea 子账号": "No Websea sub-account in this pair",
+        "配置检查": "Config Check",
+        "运行健康": "Runtime Health",
+        "最高风险": "Highest Risk",
+        "正常": "Normal",
+        "阻断": "Blocked",
+        "未检测": "Unknown",
+        "最近更新": "Last Update",
+        "未发现运行日志": "No runtime log found",
+        "真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。": "Live trading mode is enabled. This page does not place orders, but the backend engine may submit real orders.",
+        "模拟运行中。当前配置默认不会真实下单。": "Dry run mode. Current config should not submit real orders by default.",
+        "危险操作区": "Danger Zone",
+        "该区域会修改敏感配置，请确认后再保存。": "This area changes sensitive config. Review before saving.",
     }
 }
 
@@ -312,11 +339,11 @@ source 到 hedge 的同步张数比例。
 """
 
 PAGE_META = {
-    "分组总览": ("分组总览", "查看 Gate 与 Websea 的账号配对、跟随开关、实时余额和持仓。"),
-    "账号管理": ("账号管理", "维护交易账号、启用状态、接口地址和密钥。"),
+    "分组总览": ("总览", "查看运行状态、配置检查、账号配对、实时余额和持仓。"),
+    "账号管理": ("账号", "维护交易账号、启用状态、接口地址和密钥。"),
     "新增账号": ("新增账号", "新增 Gate 或 Websea 账号，并挂载到指定策略单元。"),
-    "策略配置": ("策略配置", "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。"),
-    "交易对配置": ("交易对配置", "维护交易对映射、数量换算比例、步进和风控阈值。"),
+    "策略配置": ("策略", "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。"),
+    "交易对配置": ("交易对", "维护交易对映射、数量换算比例、步进和风控阈值。"),
     "原始配置": ("原始配置", "编辑运行参数和原始 JSON，查看同步状态文件。"),
     "使用说明": ("使用说明", "查看参数中文说明、功能介绍和安全使用流程。"),
 }
@@ -335,7 +362,7 @@ def tr(text):
 
 
 def page_label(page):
-    return tr(page)
+    return tr(PAGE_LABELS.get(page, page))
 
 
 def page_from_label(label):
@@ -377,21 +404,24 @@ def inject_theme():
         """
         <style>
         :root {
-          --bg: #f6f8fb;
-          --panel: #ffffff;
-          --panel-soft: #f8fafc;
-          --line: #dde4ee;
-          --line-strong: #c9d3df;
-          --text: #18212f;
-          --muted: #64748b;
-          --accent: #0f766e;
-          --accent-soft: #e6f4f1;
-          --danger: #b42318;
-          --danger-soft: #fff1f0;
-          --warning: #a15c07;
-          --warning-soft: #fff7e6;
-          --ok: #067647;
-          --ok-soft: #ecfdf3;
+          --bg: #F6F8FA;
+          --panel: #FFFFFF;
+          --panel-soft: #F8FAFC;
+          --line: #E5E7EB;
+          --line-strong: #CBD5E1;
+          --text: #111827;
+          --muted: #6B7280;
+          --muted-light: #9CA3AF;
+          --accent: #2563EB;
+          --accent-soft: #EFF6FF;
+          --accent-text: #1D4ED8;
+          --danger: #DC2626;
+          --danger-soft: #FEF2F2;
+          --warning: #D97706;
+          --warning-soft: #FFF7ED;
+          --ok: #16A34A;
+          --ok-soft: #ECFDF3;
+          --paused: #6B7280;
         }
 
         .stApp {
@@ -400,9 +430,9 @@ def inject_theme():
         }
 
         .block-container {
-          padding-top: 1.25rem;
+          padding-top: 1rem;
           padding-bottom: 3rem;
-          max-width: 1400px;
+          max-width: 1440px;
         }
 
         section[data-testid="stSidebar"] {
@@ -486,6 +516,7 @@ def inject_theme():
           flex-wrap: wrap;
           gap: .45rem;
           justify-content: flex-end;
+          max-width: 780px;
         }
 
         .status-pill {
@@ -520,6 +551,45 @@ def inject_theme():
           border-color: #fecdca;
         }
 
+        .status-pill.info {
+          color: var(--accent-text);
+          background: var(--accent-soft);
+          border-color: #BFDBFE;
+        }
+
+        .mode-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: .65rem;
+          border-radius: 8px;
+          padding: .75rem .9rem;
+          border: 1px solid var(--line);
+          background: var(--panel);
+          margin-bottom: 1rem;
+        }
+
+        .mode-banner.danger {
+          background: var(--danger-soft);
+          border-color: #FCA5A5;
+          color: var(--danger);
+        }
+
+        .mode-banner.ok {
+          background: var(--ok-soft);
+          border-color: #BBF7D0;
+          color: var(--ok);
+        }
+
+        .mode-banner-title {
+          font-weight: 760;
+          margin-bottom: .15rem;
+        }
+
+        .mode-banner-copy {
+          color: var(--text);
+          font-size: .88rem;
+        }
+
         .section-heading {
           margin-top: 1.15rem;
           margin-bottom: .45rem;
@@ -532,6 +602,33 @@ def inject_theme():
           margin-top: -.2rem;
           margin-bottom: .75rem;
           color: var(--muted);
+          font-size: .88rem;
+        }
+
+        .panel {
+          border: 1px solid var(--line);
+          background: var(--panel);
+          border-radius: 8px;
+          padding: .9rem;
+          margin-bottom: 1rem;
+        }
+
+        .danger-panel {
+          border: 1px solid #FCA5A5;
+          background: var(--danger-soft);
+          border-radius: 8px;
+          padding: .9rem;
+          margin: .75rem 0 1rem;
+        }
+
+        .danger-panel-title {
+          color: var(--danger);
+          font-weight: 760;
+          margin-bottom: .2rem;
+        }
+
+        .danger-panel-copy {
+          color: var(--text);
           font-size: .88rem;
         }
 
@@ -549,6 +646,21 @@ def inject_theme():
           padding: .85rem .9rem;
         }
 
+        .metric-tile.danger {
+          border-color: #FCA5A5;
+          background: var(--danger-soft);
+        }
+
+        .metric-tile.warn {
+          border-color: #FED7AA;
+          background: var(--warning-soft);
+        }
+
+        .metric-tile.ok {
+          border-color: #BBF7D0;
+          background: var(--ok-soft);
+        }
+
         .metric-label {
           color: var(--muted);
           font-size: .78rem;
@@ -560,6 +672,12 @@ def inject_theme():
           font-size: 1.35rem;
           font-weight: 750;
           line-height: 1.15;
+        }
+
+        .metric-help {
+          color: var(--muted);
+          font-size: .72rem;
+          margin-top: .25rem;
         }
 
         div[data-testid="stExpander"] {
@@ -585,6 +703,45 @@ def inject_theme():
           color: var(--text);
         }
 
+        .ws-table-wrap {
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          overflow-x: auto;
+          background: var(--panel);
+          margin: .65rem 0 1rem;
+        }
+
+        table.ws-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: .84rem;
+          color: var(--text);
+        }
+
+        table.ws-table thead th {
+          background: #F1F5F9;
+          color: #374151;
+          font-weight: 720;
+          text-align: left;
+          padding: .62rem .7rem;
+          border-bottom: 1px solid var(--line);
+          white-space: nowrap;
+        }
+
+        table.ws-table tbody td {
+          padding: .6rem .7rem;
+          border-bottom: 1px solid #EEF2F7;
+          vertical-align: top;
+        }
+
+        table.ws-table tbody tr:last-child td {
+          border-bottom: 0;
+        }
+
+        table.ws-table tbody tr:hover td {
+          background: #F8FAFC;
+        }
+
         div[data-testid="stAlert"] {
           border-radius: 8px;
         }
@@ -594,13 +751,30 @@ def inject_theme():
         button[kind="primary"] {
           border-radius: 6px;
           border: 1px solid var(--line-strong);
+          background: #ffffff;
+          color: var(--text);
           box-shadow: none;
           font-weight: 650;
+        }
+
+        .stButton > button *,
+        .stDownloadButton > button * {
+          color: inherit !important;
         }
 
         .stButton > button:hover {
           border-color: var(--accent);
           color: var(--accent);
+        }
+
+        button[kind="primary"] {
+          background: var(--accent) !important;
+          border-color: var(--accent) !important;
+          color: #ffffff !important;
+        }
+
+        button[kind="primary"] * {
+          color: #ffffff !important;
         }
 
         div[data-baseweb="input"] > div,
@@ -619,6 +793,13 @@ def inject_theme():
 
         h1, h2, h3, h4 {
           letter-spacing: 0;
+        }
+
+        code {
+          color: var(--accent-text);
+          background: #F1F5F9;
+          border-radius: 4px;
+          padding: .08rem .25rem;
         }
 
         @media (max-width: 900px) {
@@ -650,6 +831,86 @@ def render_section(title, note=None):
         st.markdown(f'<div class="section-note">{tr(note)}</div>', unsafe_allow_html=True)
 
 
+def esc(value):
+    return html.escape(str(value))
+
+
+def status_pill(label, class_name=""):
+    return f'<span class="status-pill {class_name}">{esc(label)}</span>'
+
+
+def render_table(data):
+    df = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
+    if df.empty:
+        st.info(tr("暂无数据") if current_language() == "zh" else "No data")
+        return
+    table_html = df.to_html(index=False, escape=True, classes="ws-table", border=0)
+    st.markdown(f'<div class="ws-table-wrap">{table_html}</div>', unsafe_allow_html=True)
+
+
+def risk_summary(accounts_data, strategy_data, global_data):
+    checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
+    has_blocker = not checks.empty and (checks["状态"] == "ERROR").any()
+    dry_run = bool(global_data.get("dry_run", True))
+    state_path = Path(global_data.get("state_file", "logs/state.json"))
+    log_path = Path("logs/system.log")
+    if has_blocker or not dry_run:
+        level = "阻断" if has_blocker else "预警"
+        cls = "danger" if has_blocker or not dry_run else "warn"
+    else:
+        level = "正常"
+        cls = "ok"
+    if log_path.exists():
+        updated = datetime.fromtimestamp(log_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    elif state_path.exists():
+        updated = datetime.fromtimestamp(state_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        updated = tr("未发现运行日志")
+    return {
+        "checks": checks,
+        "has_blocker": has_blocker,
+        "dry_run": dry_run,
+        "level": level,
+        "class": cls,
+        "updated": updated,
+    }
+
+
+def render_mode_banner(global_data):
+    dry_run = bool(global_data.get("dry_run", True))
+    if dry_run:
+        title = tr("模拟下单")
+        copy = tr("模拟运行中。当前配置默认不会真实下单。")
+        cls = "ok"
+    else:
+        title = tr("真实下单")
+        copy = tr("真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。")
+        cls = "danger"
+    st.markdown(
+        f"""
+        <div class="mode-banner {cls}">
+          <div>
+            <div class="mode-banner-title">{esc(title)}</div>
+            <div class="mode-banner-copy">{esc(copy)}</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_danger_panel(title, copy):
+    st.markdown(
+        f"""
+        <div class="danger-panel">
+          <div class="danger-panel-title">{esc(tr(title))}</div>
+          <div class="danger-panel-copy">{esc(tr(copy))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def dashboard_metrics(accounts_data, strategy_data, global_data):
     accounts = accounts_data.get("accounts", {})
     units = strategy_data.get("units", [])
@@ -657,11 +918,18 @@ def dashboard_metrics(accounts_data, strategy_data, global_data):
     enabled_units = sum(1 for unit in units if unit.get("enabled", True))
     symbol_count = sum(len(unit.get("symbols", [])) for unit in units)
     dry_run = bool(global_data.get("dry_run", True))
+    checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
+    blocker_count = int((checks["状态"] == "ERROR").sum()) if not checks.empty else 0
     return [
-        (tr("启用账号"), enabled_accounts),
-        (tr("策略单元"), enabled_units),
-        (tr("交易对"), symbol_count),
-        (tr("运行模式"), tr("模拟") if dry_run else tr("实盘")),
+        {"label": tr("启用账号"), "value": enabled_accounts, "class": ""},
+        {"label": tr("策略单元"), "value": enabled_units, "class": ""},
+        {"label": tr("交易对"), "value": symbol_count, "class": ""},
+        {
+            "label": tr("配置检查"),
+            "value": tr("阻断") if blocker_count else tr("正常"),
+            "class": "danger" if blocker_count else "ok",
+            "help": f"{blocker_count} blocker" if blocker_count else "",
+        },
     ]
 
 
@@ -738,11 +1006,22 @@ def log_health_row(global_data):
 
 def render_metric_band(metrics):
     html = ['<div class="metric-band">']
-    for label, value in metrics:
+    for item in metrics:
+        if isinstance(item, dict):
+            label = item.get("label", "")
+            value = item.get("value", "")
+            cls = item.get("class", "")
+            help_text = item.get("help", "")
+        else:
+            label, value = item
+            cls = ""
+            help_text = ""
+        help_html = f'<div class="metric-help">{esc(help_text)}</div>' if help_text else ''
         html.append(
-            '<div class="metric-tile">'
-            f'<div class="metric-label">{label}</div>'
-            f'<div class="metric-value">{value}</div>'
+            f'<div class="metric-tile {cls}">'
+            f'<div class="metric-label">{esc(label)}</div>'
+            f'<div class="metric-value">{esc(value)}</div>'
+            f'{help_html}'
             '</div>'
         )
     html.append('</div>')
@@ -751,25 +1030,33 @@ def render_metric_band(metrics):
 
 def render_app_header(page, accounts_data, strategy_data, global_data):
     title, subtitle = PAGE_META.get(page, (page, ""))
-    dry_run = bool(global_data.get("dry_run", True))
+    risk = risk_summary(accounts_data, strategy_data, global_data)
+    dry_run = risk["dry_run"]
     enabled_accounts = sum(1 for cfg in accounts_data.get("accounts", {}).values() if cfg.get("enabled", True))
     enabled_units = sum(1 for unit in strategy_data.get("units", []) if unit.get("enabled", True))
     mode_class = "ok" if dry_run else "danger"
     mode_text = tr("模拟下单") if dry_run else tr("真实下单")
+    check_class = "danger" if risk["has_blocker"] else "ok"
+    check_text = f"{tr('配置检查')}：{tr('阻断') if risk['has_blocker'] else tr('正常')}"
+    risk_text = f"{tr('最高风险')}：{tr(risk['level'])}"
     html = f"""
     <div class="app-header">
       <div>
-        <div class="app-title">{tr(title)}</div>
-        <div class="app-subtitle">{tr(subtitle)}</div>
+        <div class="app-title">{esc(tr(title))}</div>
+        <div class="app-subtitle">{esc(tr(subtitle))}</div>
       </div>
       <div class="status-row">
-        <span class="status-pill {mode_class}">{mode_text}</span>
-        <span class="status-pill">{tr("启用账号")} {enabled_accounts}</span>
-        <span class="status-pill">{tr("策略单元")} {enabled_units}</span>
+        {status_pill(mode_text, mode_class)}
+        {status_pill(check_text, check_class)}
+        {status_pill(risk_text, risk["class"])}
+        {status_pill(f"{tr('最近更新')}：{risk['updated']}", "info")}
+        {status_pill(f"{tr('启用账号')} {enabled_accounts}", "")}
+        {status_pill(f"{tr('策略单元')} {enabled_units}", "")}
       </div>
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+    render_mode_banner(global_data)
 
 
 def mask_key(value):
@@ -1346,8 +1633,7 @@ def grouped_units_view(strategy_data, accounts_data):
     accounts = accounts_data.get("accounts", {})
     for unit in strategy_data.get("units", []):
         with st.expander(f"{tr('策略单元')}：{unit.get('name')}", expanded=True):
-            render_section("账号配对", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。")
-            st.dataframe(pd.DataFrame(paired_account_rows(unit, accounts)), width="stretch")
+            render_table(paired_account_rows(unit, accounts))
 
             render_section("跟随开关", "快速调整每对子账号的启用状态和跟随比例。")
             source = unit.get("source", {})
@@ -1415,7 +1701,7 @@ def grouped_units_view(strategy_data, accounts_data):
                     else:
                         st.info(tr("这一组没有 Websea 子账号"))
             render_section("交易对")
-            st.dataframe(pd.DataFrame(unit.get("symbols", [])), width="stretch")
+            render_table(unit.get("symbols", []))
 
 
 def help_page():
@@ -1467,9 +1753,16 @@ def main():
         page = st.radio(tr("选择页面"), PAGES, format_func=page_label)
         st.divider()
         st.caption(tr("当前状态"))
-        st.write(tr("运行模式："), tr("模拟下单") if global_data.get("dry_run", True) else tr("真实下单"))
-        st.write(tr("启用账号："), sum(1 for cfg in accounts_data.get("accounts", {}).values() if cfg.get("enabled", True)))
-        st.write(tr("策略单元："), sum(1 for unit in strategy_data.get("units", []) if unit.get("enabled", True)))
+        side_risk = risk_summary(accounts_data, strategy_data, global_data)
+        st.markdown(
+            " ".join([
+                status_pill(tr("模拟下单") if side_risk["dry_run"] else tr("真实下单"), "ok" if side_risk["dry_run"] else "danger"),
+                status_pill(f"{tr('最高风险')}：{tr(side_risk['level'])}", side_risk["class"]),
+            ]),
+            unsafe_allow_html=True,
+        )
+        st.caption(f"{tr('启用账号')}：{sum(1 for cfg in accounts_data.get('accounts', {}).values() if cfg.get('enabled', True))}")
+        st.caption(f"{tr('策略单元')}：{sum(1 for unit in strategy_data.get('units', []) if unit.get('enabled', True))}")
 
     render_app_header(page, accounts_data, strategy_data, global_data)
 
@@ -1481,9 +1774,14 @@ def main():
             st.error(tr("当前配置存在会阻断同步的问题：有启用账号缺少密钥、被禁用或不存在。"))
         elif not checks.empty:
             st.success(tr("启用策略账号的基础配置检查通过。"))
-        st.dataframe(checks, width="stretch")
-        st.dataframe(pd.DataFrame(log_health_row(global_data)), width="stretch")
+        if checks.empty:
+            st.info(tr("未检测"))
+        else:
+            render_table(checks)
+        render_section("运行健康")
+        render_table(log_health_row(global_data))
 
+        render_section("账号配对", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。")
         grouped_units_view(strategy_data, accounts_data)
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
         if st.button(tr("刷新实时账户信息")):
@@ -1515,7 +1813,7 @@ def main():
                                              "balance": "ERROR", "available": "", "unrealized_pnl": str(e)})
                     progress.progress((idx + 1) / max(len(accounts), 1))
             render_section("实时余额")
-            st.dataframe(pd.DataFrame(runtime_rows), width="stretch")
+            render_table(runtime_rows)
             render_section("实时持仓")
             if position_rows:
                 position_df = pd.DataFrame(position_rows)
@@ -1537,7 +1835,7 @@ def main():
                     "liq_price": "强平价",
                     "pnl": "未实现盈亏",
                 })
-                st.dataframe(display_df, width="stretch", hide_index=True)
+                render_table(display_df)
                 charts = build_position_charts(position_rows)
                 if charts:
                     pos_fig, pnl_fig = charts
@@ -1550,7 +1848,7 @@ def main():
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
         accounts = accounts_data.get("accounts", {})
         render_section("账号列表", "密钥默认脱敏展示；替换密钥时在账号详情中输入新值。")
-        st.dataframe(pd.DataFrame(account_display_rows(accounts_data)), width="stretch")
+        render_table(account_display_rows(accounts_data))
 
         if not accounts:
             st.info(tr("还没有账号"))
@@ -1577,6 +1875,8 @@ def main():
                         st.rerun()
                 with col2:
                     confirm_delete = st.checkbox(tr("确认删除"), key=f"delete_confirm_{name}")
+                    if confirm_delete:
+                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
                     if st.button(tr("删除账号"), key=f"delete_{name}", disabled=not confirm_delete):
                         accounts.pop(name, None)
                         remove_account_references(strategy_data, name)
@@ -1587,6 +1887,7 @@ def main():
 
     if page == "新增账号":
         render_section("新增账号", "新账号会写入 accounts.json，并按选择挂载到指定策略单元。")
+        st.info(tr("密钥默认脱敏展示；替换密钥时在账号详情中输入新值。"))
         with st.form("add_account_form"):
             account_name = st.text_input(tr("账号名称"))
             exchange = st.selectbox(tr("交易所"), ["gate", "websea"])
@@ -1648,7 +1949,7 @@ def main():
                 enabled = st.checkbox(tr("启用策略单元"), value=bool(unit.get("enabled", True)), key=f"{unit.get('name')}_enabled")
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.markdown("#### Source")
+                    st.markdown("#### Source / Gate")
                     source_accounts = gate_accounts or [source.get("account", "")]
                     source_account = st.selectbox(
                         tr("Source 主账号"),
@@ -1671,7 +1972,7 @@ def main():
                     )
                     source_settle = st.text_input("Source settle", value=source.get("settle", "usdt"), key=f"{unit.get('name')}_source_settle")
                 with col2:
-                    st.markdown("#### Hedge")
+                    st.markdown("#### Hedge / Websea")
                     hedge_accounts = websea_accounts or [hedge.get("account", "")]
                     hedge_account = st.selectbox(
                         tr("Hedge 主账号"),
@@ -1762,6 +2063,8 @@ def main():
                             st.error(str(exc))
                 with col2:
                     confirm_delete = st.checkbox(tr("确认删除策略单元"), key=f"{unit.get('name')}_delete_confirm")
+                    if confirm_delete:
+                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
                     if st.button(tr("删除策略单元"), key=f"{unit.get('name')}_delete_unit", disabled=not confirm_delete):
                         strategy_data["units"] = [u for u in strategy_data.get("units", []) if u.get("name") != unit.get("name")]
                         save_json(STRATEGY_PATH, strategy_data)
@@ -1822,7 +2125,7 @@ def main():
                 ]
                 summary_df = pd.DataFrame(symbols)
                 visible_summary_cols = [col for col in summary_cols if col in summary_df.columns]
-                st.dataframe(
+                render_table(
                     summary_df[visible_summary_cols].rename(columns={
                         "source_symbol": "Gate合约",
                         "hedge_symbol": "Websea合约",
@@ -1831,14 +2134,13 @@ def main():
                         "source_amount_multiplier": "Gate面值",
                         "hedge_amount_multiplier": "Websea面值",
                         "min_sync_delta": "最小同步差",
-                    }),
-                    width="stretch",
-                    hide_index=True,
+                    })
                 )
             else:
                 st.info(tr("当前策略单元还没有交易对"))
 
             with st.expander(tr("高级参数编辑"), expanded=False):
+                st.caption(tr("维护交易对映射、数量换算比例、步进和风控阈值。"))
                 edited_symbols = st.data_editor(
                     pd.DataFrame(symbols),
                     num_rows="dynamic",
@@ -1857,6 +2159,8 @@ def main():
 
     if page == "原始配置":
         render_section("运行配置", "常用运行参数可以在这里直接保存；更完整配置可在下方 JSON 编辑区修改。")
+        if not bool(global_data.get("dry_run", True)):
+            render_danger_panel("真实下单", "真实下单模式已开启。当前页面不会执行下单，但保存配置可能影响后端同步引擎。")
         dry_run = st.checkbox("dry_run", value=bool(global_data.get("dry_run", True)))
         max_concurrent = st.number_input(
             "max_concurrent_adjustments",
@@ -1888,6 +2192,7 @@ def main():
             st.info(tr("状态文件还不存在"))
 
         render_section("JSON 编辑", "保存 accounts.json 前需要确认显示完整内容，避免误改密钥。")
+        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
         tab_global, tab_strategy, tab_accounts = st.tabs(["global_config.json", "strategy_config.json", "accounts.json"])
         with tab_global:
             global_text = st.text_area(
