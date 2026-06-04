@@ -178,6 +178,9 @@ I18N = {
         "系统状态": "System Status",
         "后端同步引擎需单独运行。这里集中查看配置检查和日志状态。": "The backend sync engine runs separately. Config checks and log status are grouped here.",
         "用于判断同步引擎是否已经产生运行日志或状态文件。": "Use this to see whether the sync engine has produced log or state files.",
+        "暂无数据": "No data",
+        "当前没有可展示的数据。请检查配置或稍后刷新。": "No data is available. Check the configuration or refresh later.",
+        "当前没有可检测的策略账号。请先配置并启用策略单元。": "There are no strategy accounts to check. Configure and enable a strategy unit first.",
         "最近更新": "Last Update",
         "未发现运行日志": "No runtime log found",
         "真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。": "Live trading mode is enabled. This page does not place orders, but the backend engine may submit real orders.",
@@ -407,33 +410,48 @@ def inject_theme():
         """
         <style>
         :root {
-          --bg: #F8FAFC;
-          --panel: #FFFFFF;
-          --panel-strong: #FFFFFF;
-          --panel-soft: #F3F6F8;
-          --line: #EEF2F7;
-          --line-strong: #E5E7EB;
-          --text: #111827;
-          --muted: #6B7280;
-          --muted-light: #94A3B8;
-          --accent: #14B8A6;
-          --accent-soft: #ECFDF8;
-          --accent-text: #0F766E;
-          --danger: #E11D48;
-          --danger-soft: #FFF1F2;
-          --warning: #D97706;
-          --warning-soft: #FFF7ED;
-          --ok: #059669;
-          --ok-soft: #ECFDF5;
-          --paused: #6B7280;
+          --color-bg-layout: #F8FAFC;
+          --color-bg-container: #FFFFFF;
+          --color-bg-subtle: #F3F6F8;
+          --color-bg-table-header: #F8FAFC;
+          --color-border: #EEF2F7;
+          --color-border-strong: #E5E7EB;
+          --color-text: #111827;
+          --color-text-secondary: #6B7280;
+          --color-text-tertiary: #9CA3AF;
+          --color-primary: #14B8A6;
+          --color-primary-hover: #0D9488;
+          --color-primary-bg: #ECFDF8;
+          --color-primary-text: #0F766E;
+          --color-success: #059669;
+          --color-success-bg: #ECFDF5;
+          --color-warning: #D97706;
+          --color-warning-bg: #FFF7ED;
+          --color-danger: #E11D48;
+          --color-danger-bg: #FFF1F2;
+          --color-info: #2563EB;
+          --color-info-bg: #EFF6FF;
+          --space-4: 4px;
+          --space-8: 8px;
+          --space-12: 12px;
+          --space-16: 16px;
+          --space-24: 24px;
+          --space-32: 32px;
+          --space-48: 48px;
+          --radius-lg: 16px;
+          --radius-md: 12px;
+          --radius-sm: 8px;
+          --shadow-card: 0 1px 3px rgba(15, 23, 42, .05), 0 10px 30px rgba(15, 23, 42, .04);
         }
 
         .stApp {
           background:
             radial-gradient(circle at 58% 6%, rgba(20, 184, 166, .11), transparent 34rem),
             radial-gradient(circle at 92% 28%, rgba(59, 130, 246, .07), transparent 28rem),
-            var(--bg);
-          color: var(--text);
+            var(--color-bg-layout);
+          color: var(--color-text);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+          font-variant-numeric: tabular-nums;
         }
 
         #MainMenu,
@@ -463,42 +481,42 @@ def inject_theme():
 
         button[data-testid="stExpandSidebarButton"] {
           position: fixed !important;
-          top: 16px !important;
-          left: 16px !important;
+          top: var(--space-16) !important;
+          left: var(--space-16) !important;
           z-index: 1000001 !important;
           width: 32px !important;
           height: 32px !important;
-          border: 1px solid var(--line-strong) !important;
-          border-radius: 8px !important;
-          background: #ffffff !important;
-          color: var(--text) !important;
+          border: 1px solid var(--color-border-strong) !important;
+          border-radius: var(--radius-sm) !important;
+          background: var(--color-bg-container) !important;
+          color: var(--color-text) !important;
           box-shadow: 0 10px 24px rgba(15, 23, 42, .10) !important;
         }
 
         .block-container {
-          padding-top: 1.1rem;
+          padding-top: var(--space-16);
           padding-bottom: 3rem;
           max-width: 1280px;
         }
 
         section[data-testid="stSidebar"] {
-          background: #ffffff;
-          border-right: 1px solid var(--line);
-          color: var(--text);
+          background: var(--color-bg-container);
+          border-right: 1px solid var(--color-border);
+          color: var(--color-text);
         }
 
         section[data-testid="stSidebar"] * {
-          color: var(--text) !important;
+          color: var(--color-text) !important;
         }
 
         section[data-testid="stSidebar"] h1 {
           font-size: 1.35rem;
-          color: var(--text);
+          color: var(--color-text);
           margin-bottom: .1rem;
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label {
-          border-radius: 12px;
+          border-radius: var(--radius-md);
           padding: .45rem .55rem;
           margin-bottom: .2rem;
           border: 1px solid transparent;
@@ -512,7 +530,7 @@ def inject_theme():
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
-          background: var(--accent-soft);
+          background: var(--color-primary-bg);
           border-color: #CCFBF1;
         }
 
@@ -522,22 +540,22 @@ def inject_theme():
         [data-testid="stWidgetLabel"],
         [data-testid="stWidgetLabel"] p,
         [data-testid="stWidgetLabel"] span {
-          color: var(--text) !important;
+          color: var(--color-text) !important;
         }
 
         .stCheckbox label,
         .stCheckbox label p,
         .stRadio label,
         .stRadio label p {
-          color: var(--text) !important;
+          color: var(--color-text) !important;
         }
 
         .app-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 1rem;
-          padding: .15rem 0 1rem;
+          gap: var(--space-16);
+          padding: 0 0 var(--space-16);
           border: 0;
           background: transparent;
           margin-bottom: .15rem;
@@ -547,21 +565,21 @@ def inject_theme():
           font-size: 1.45rem;
           line-height: 1.2;
           font-weight: 760;
-          color: var(--text);
+          color: var(--color-text);
           margin: 0;
           letter-spacing: 0;
         }
 
         .app-subtitle {
           margin-top: .35rem;
-          color: var(--muted);
+          color: var(--color-text-secondary);
           font-size: .92rem;
         }
 
         .status-row {
           display: flex;
           flex-wrap: wrap;
-          gap: .45rem;
+          gap: var(--space-8);
           justify-content: flex-end;
           max-width: 520px;
         }
@@ -570,38 +588,38 @@ def inject_theme():
           display: inline-flex;
           align-items: center;
           min-height: 28px;
-          border-radius: 12px;
+          border-radius: var(--radius-md);
           padding: .28rem .7rem;
           font-size: .78rem;
           font-weight: 650;
-          border: 1px solid var(--line);
-          background: var(--panel);
-          color: var(--text);
+          border: 1px solid var(--color-border);
+          background: var(--color-bg-container);
+          color: var(--color-text);
           white-space: nowrap;
           box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
         }
 
         .status-pill.ok {
-          color: var(--ok);
-          background: var(--ok-soft);
+          color: var(--color-success);
+          background: var(--color-success-bg);
           border-color: #BBF7D0;
         }
 
         .status-pill.warn {
-          color: var(--warning);
-          background: var(--warning-soft);
+          color: var(--color-warning);
+          background: var(--color-warning-bg);
           border-color: #FED7AA;
         }
 
         .status-pill.danger {
-          color: var(--danger);
-          background: var(--danger-soft);
+          color: var(--color-danger);
+          background: var(--color-danger-bg);
           border-color: #FECDD3;
         }
 
         .status-pill.info {
-          color: var(--accent-text);
-          background: var(--accent-soft);
+          color: var(--color-primary-text);
+          background: var(--color-primary-bg);
           border-color: #CCFBF1;
         }
 
@@ -609,24 +627,24 @@ def inject_theme():
           display: flex;
           align-items: flex-start;
           gap: .65rem;
-          border-radius: 14px;
-          padding: .85rem 1rem;
-          border: 1px solid var(--line);
-          background: var(--panel);
-          margin-bottom: 1rem;
+          border-radius: var(--radius-lg);
+          padding: var(--space-12) var(--space-16);
+          border: 1px solid var(--color-border);
+          background: var(--color-bg-container);
+          margin-bottom: var(--space-16);
           box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
         }
 
         .mode-banner.danger {
-          background: var(--danger-soft);
+          background: var(--color-danger-bg);
           border-color: #FDA4AF;
-          color: var(--danger);
+          color: var(--color-danger);
         }
 
         .mode-banner.ok {
-          background: var(--ok-soft);
+          background: var(--color-success-bg);
           border-color: #BBF7D0;
-          color: var(--ok);
+          color: var(--color-success);
         }
 
         .mode-banner-title {
@@ -635,108 +653,129 @@ def inject_theme():
         }
 
         .mode-banner-copy {
-          color: var(--text);
+          color: var(--color-text);
           font-size: .88rem;
         }
 
         .section-heading {
-          margin-top: 1.25rem;
-          margin-bottom: .45rem;
+          margin-top: var(--space-24);
+          margin-bottom: var(--space-8);
           font-size: 1.05rem;
           font-weight: 700;
-          color: var(--text);
+          color: var(--color-text);
         }
 
         .section-note {
           margin-top: -.2rem;
-          margin-bottom: .75rem;
-          color: var(--muted);
+          margin-bottom: var(--space-12);
+          color: var(--color-text-secondary);
           font-size: .88rem;
         }
 
         .panel {
-          border: 1px solid var(--line);
-          background: var(--panel);
-          border-radius: 16px;
-          padding: .9rem;
-          margin-bottom: 1rem;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, .04), 0 10px 30px rgba(15, 23, 42, .03);
+          border: 1px solid var(--color-border);
+          background: var(--color-bg-container);
+          border-radius: var(--radius-lg);
+          padding: var(--space-16);
+          margin-bottom: var(--space-16);
+          box-shadow: var(--shadow-card);
         }
 
         .danger-panel {
           border: 1px solid #FCA5A5;
-          background: var(--danger-soft);
-          border-radius: 14px;
-          padding: .9rem;
-          margin: .75rem 0 1rem;
+          background: var(--color-danger-bg);
+          border-radius: var(--radius-lg);
+          padding: var(--space-16);
+          margin: var(--space-12) 0 var(--space-16);
         }
 
         .danger-panel-title {
-          color: var(--danger);
+          color: var(--color-danger);
           font-weight: 760;
           margin-bottom: .2rem;
         }
 
         .danger-panel-copy {
-          color: var(--text);
+          color: var(--color-text);
           font-size: .88rem;
+        }
+
+        .empty-state {
+          border: 1px dashed var(--color-border-strong);
+          background: var(--color-bg-container);
+          border-radius: var(--radius-lg);
+          padding: var(--space-16);
+          margin: var(--space-12) 0 var(--space-16);
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .03);
+        }
+
+        .empty-title {
+          color: var(--color-text);
+          font-weight: 700;
+          margin-bottom: var(--space-4);
+        }
+
+        .empty-copy {
+          color: var(--color-text-secondary);
+          font-size: .86rem;
+          line-height: 1.45;
         }
 
         .metric-band {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: .8rem;
-          margin-bottom: 1.1rem;
+          gap: var(--space-16);
+          margin-bottom: var(--space-24);
         }
 
         .metric-tile {
-          background: var(--panel);
-          border: 1px solid var(--line);
-          border-radius: 16px;
-          padding: 1rem;
+          background: var(--color-bg-container);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          padding: var(--space-16);
           min-height: 100px;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, .05), 0 10px 30px rgba(15, 23, 42, .04);
+          box-shadow: var(--shadow-card);
         }
 
         .metric-tile.danger {
           border-color: #FECDD3;
-          background: var(--danger-soft);
+          background: var(--color-danger-bg);
         }
 
         .metric-tile.warn {
           border-color: #FED7AA;
-          background: var(--warning-soft);
+          background: var(--color-warning-bg);
         }
 
         .metric-tile.ok {
           border-color: #BBF7D0;
-          background: var(--ok-soft);
+          background: var(--color-success-bg);
         }
 
         .metric-label {
-          color: var(--muted);
+          color: var(--color-text-secondary);
           font-size: .78rem;
           margin-bottom: .25rem;
         }
 
         .metric-value {
-          color: var(--text);
+          color: var(--color-text);
           font-size: 1.42rem;
           font-weight: 750;
           line-height: 1.15;
         }
 
         .metric-help {
-          color: var(--muted);
+          color: var(--color-text-secondary);
           font-size: .72rem;
           margin-top: .25rem;
         }
 
         div[data-testid="stExpander"] {
-          border: 1px solid var(--line);
-          border-radius: 16px;
-          background: var(--panel);
-          box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          background: var(--color-bg-container);
+          box-shadow: var(--shadow-card);
         }
 
         div[data-testid="stExpander"] details summary {
@@ -747,37 +786,37 @@ def inject_theme():
         div[data-testid="stTable"] {
           border-radius: 8px;
           overflow: hidden;
-          color: var(--text);
+          color: var(--color-text);
         }
 
         div[data-testid="stDataFrame"] *,
         div[data-testid="stTable"] * {
-          color: var(--text);
+          color: var(--color-text);
         }
 
         .ws-table-wrap {
-          border: 1px solid var(--line);
-          border-radius: 14px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
           overflow-x: auto;
-          background: var(--panel);
-          margin: .65rem 0 1rem;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
+          background: var(--color-bg-container);
+          margin: var(--space-12) 0 var(--space-16);
+          box-shadow: var(--shadow-card);
         }
 
         table.ws-table {
           width: 100%;
           border-collapse: collapse;
           font-size: .84rem;
-          color: var(--text);
+          color: var(--color-text);
         }
 
         table.ws-table thead th {
-          background: #F8FAFC;
+          background: var(--color-bg-table-header);
           color: #374151;
           font-weight: 720;
           text-align: left;
           padding: .62rem .7rem;
-          border-bottom: 1px solid var(--line);
+          border-bottom: 1px solid var(--color-border);
           white-space: nowrap;
         }
 
@@ -785,6 +824,12 @@ def inject_theme():
           padding: .6rem .7rem;
           border-bottom: 1px solid #F1F5F9;
           vertical-align: top;
+        }
+
+        table.ws-table td:nth-child(n+7),
+        table.ws-table th:nth-child(n+7) {
+          text-align: right;
+          font-variant-numeric: tabular-nums;
         }
 
         table.ws-table tbody tr:last-child td {
@@ -803,9 +848,9 @@ def inject_theme():
         .stDownloadButton > button,
         button[kind="primary"] {
           border-radius: 6px;
-          border: 1px solid var(--line-strong);
-          background: #ffffff;
-          color: var(--text);
+          border: 1px solid var(--color-border-strong);
+          background: var(--color-bg-container);
+          color: var(--color-text);
           box-shadow: none;
           font-weight: 650;
         }
@@ -816,13 +861,13 @@ def inject_theme():
         }
 
         .stButton > button:hover {
-          border-color: var(--accent);
-          color: var(--accent);
+          border-color: var(--color-primary);
+          color: var(--color-primary);
         }
 
         button[kind="primary"] {
-          background: var(--accent) !important;
-          border-color: var(--accent) !important;
+          background: var(--color-primary) !important;
+          border-color: var(--color-primary) !important;
           color: #ffffff !important;
         }
 
@@ -834,14 +879,14 @@ def inject_theme():
         div[data-baseweb="select"] > div,
         textarea {
           border-radius: 6px !important;
-          color: var(--text) !important;
-          background: #ffffff !important;
+          color: var(--color-text) !important;
+          background: var(--color-bg-container) !important;
         }
 
         input,
         textarea,
         [contenteditable="true"] {
-          color: var(--text) !important;
+          color: var(--color-text) !important;
         }
 
         h1, h2, h3, h4 {
@@ -849,7 +894,7 @@ def inject_theme():
         }
 
         code {
-          color: var(--accent-text);
+          color: var(--color-primary-text);
           background: #F1F5F9;
           border-radius: 4px;
           padding: .08rem .25rem;
@@ -892,10 +937,22 @@ def status_pill(label, class_name=""):
     return f'<span class="status-pill {class_name}">{esc(label)}</span>'
 
 
+def render_empty(title, copy):
+    st.markdown(
+        f"""
+        <div class="empty-state">
+          <div class="empty-title">{esc(tr(title))}</div>
+          <div class="empty-copy">{esc(tr(copy))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_table(data):
     df = data if isinstance(data, pd.DataFrame) else pd.DataFrame(data)
     if df.empty:
-        st.info(tr("暂无数据") if current_language() == "zh" else "No data")
+        render_empty("暂无数据", "当前没有可展示的数据。请检查配置或稍后刷新。")
         return
     table_html = df.to_html(index=False, escape=True, classes="ws-table", border=0)
     st.markdown(f'<div class="ws-table-wrap">{table_html}</div>', unsafe_allow_html=True)
@@ -1843,7 +1900,7 @@ def main():
         elif not checks.empty:
             st.success(tr("启用策略账号的基础配置检查通过。"))
         if checks.empty:
-            st.info(tr("未检测"))
+            render_empty("未检测", "当前没有可检测的策略账号。请先配置并启用策略单元。")
         else:
             render_table(checks)
         render_section("运行健康", "用于判断同步引擎是否已经产生运行日志或状态文件。")
