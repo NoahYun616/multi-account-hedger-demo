@@ -25,9 +25,12 @@ docs/iteration/
 - `docs/iteration/agent.md`
 - `docs/iteration/project_state.md`
 - `docs/iteration/git_workflow.md`
+- `docs/iteration/frontend_style_guide.md`
 - `WEBSEA_PROJECT_NOTES.md`
 
 每次对工具进行功能优化、配置变更、启动方式变更、风控逻辑变更或接口依赖变更后，都需要同步更新本 README。
+
+前端页面和交互调整需先参考 `docs/iteration/frontend_style_guide.md`。该风格确认后，新增页面、布局调整、状态标签、告警展示和危险操作都应保持一致。
 
 本工具目录已使用独立 Git 仓库管理。真实账号配置 `config/accounts.json`、虚拟环境、日志和运行状态文件不进入版本管理。
 
@@ -47,7 +50,8 @@ docs/iteration/
  │     ├─ 合约保险对冲工具优化迭代方案.md
  │     ├─ agent.md
  │     ├─ project_state.md
- │     └─ git_workflow.md
+ │     ├─ git_workflow.md
+ │     └─ frontend_style_guide.md
  ├─ clients/
  │  ├─ base.py
  │  ├─ gate_rest.py

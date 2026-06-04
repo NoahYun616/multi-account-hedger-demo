@@ -30,6 +30,7 @@
   - Streamlit 控制台可启动。
 - 已新增迭代文档目录：`docs/iteration/`。
 - 已新增 Git 管理说明：`docs/iteration/git_workflow.md`。
+- 已新增前端风格草案：`docs/iteration/frontend_style_guide.md`。
 
 ## 当前重要文件
 
@@ -39,6 +40,7 @@
 - `docs/iteration/agent.md`：后续 AI / 研发协作者工作约定。
 - `docs/iteration/project_state.md`：当前项目状态。
 - `docs/iteration/git_workflow.md`：Git 管理方式。
+- `docs/iteration/frontend_style_guide.md`：前端风格草案，待确认后作为后续 UI 标准。
 - `config/global_config.json`：全局运行参数。
 - `config/accounts.json`：本地账号配置，敏感文件，不应提交真实密钥。
 - `config/strategy_config.json`：策略单元、交易对、跟随比例和风控阈值配置。
@@ -64,6 +66,8 @@
 6. 对冲断线报警与策略暂停。
 
 第一阶段暂不建议默认自动平仓。自动 reduce-only 紧急平仓应放在 Websea 成交回报、reduce-only、风险状态接口稳定后再做。
+
+前端迭代建议先确认 `frontend_style_guide.md`。确认后，后续新增页面、调整布局、加入配置体检、对冲监控、保险节点状态等功能时，统一按该风格执行。
 
 ## 待确认
 

@@ -8,6 +8,7 @@
 - `agent.md`：给后续接手该工具的 AI / 研发协作者看的工作约定。
 - `project_state.md`：当前项目状态、已完成事项、待办和关键决策记录。
 - `git_workflow.md`：工具迭代的 Git 管理方式。
+- `frontend_style_guide.md`：前端风格草案，确认后作为后续页面和功能开发的视觉与交互标准。
 
 ## 使用规则
 
