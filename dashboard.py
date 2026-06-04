@@ -430,13 +430,42 @@ def inject_theme():
         }
 
         #MainMenu,
-        header[data-testid="stHeader"],
-        div[data-testid="stToolbar"],
+        div[data-testid="stAppDeployButton"],
+        div[data-testid="stToolbarActions"],
         div[data-testid="stDecoration"],
         div[data-testid="stStatusWidget"] {
           display: none !important;
           visibility: hidden !important;
           height: 0 !important;
+        }
+
+        div[data-testid="stToolbar"] {
+          background: transparent !important;
+          visibility: visible !important;
+        }
+
+        header[data-testid="stHeader"] {
+          background: transparent !important;
+          height: 0 !important;
+          min-height: 0 !important;
+        }
+
+        button[data-testid="stBaseButton-headerNoPadding"] {
+          visibility: visible !important;
+        }
+
+        button[data-testid="stExpandSidebarButton"] {
+          position: fixed !important;
+          top: 16px !important;
+          left: 16px !important;
+          z-index: 1000001 !important;
+          width: 32px !important;
+          height: 32px !important;
+          border: 1px solid var(--line) !important;
+          border-radius: 8px !important;
+          background: #ffffff !important;
+          color: var(--text) !important;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, .10) !important;
         }
 
         .block-container {
