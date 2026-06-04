@@ -429,6 +429,16 @@ def inject_theme():
           color: var(--text);
         }
 
+        #MainMenu,
+        header[data-testid="stHeader"],
+        div[data-testid="stToolbar"],
+        div[data-testid="stDecoration"],
+        div[data-testid="stStatusWidget"] {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+        }
+
         .block-container {
           padding-top: 1rem;
           padding-bottom: 3rem;
