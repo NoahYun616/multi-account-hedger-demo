@@ -148,6 +148,7 @@ I18N = {
         "删除子账户对": "Delete pair",
         "删除": "Delete",
         "未选择": "Not selected",
+        "当前无可用账户，前往添加": "No available accounts. Add one",
         "暂无子账户": "No sub accounts",
         "暂无子账户对": "No sub-account pairs",
         "点击新增后配置跟随子账户。": "Click Add to configure follower sub accounts.",
@@ -518,6 +519,21 @@ def page_href(page, unit=None):
 def requested_unit_name():
     value = st.query_params.get("unit", "")
     return str(value).strip()
+
+
+def set_query_target(page, unit=None):
+    slug = next((item_slug for item_page, item_slug in NAV_ITEMS if item_page == page), page)
+    params = {
+        "page": slug,
+        "lang": current_language(),
+        "sidebar": current_sidebar_mode(),
+        "theme": current_theme(),
+    }
+    if unit:
+        params["unit"] = unit
+    st.query_params.clear()
+    st.query_params.update(params)
+    st.session_state["current_page"] = page
 
 
 def live_refresh_requested():
@@ -1122,6 +1138,17 @@ def inject_theme():
           color: var(--color-text-secondary);
           font-size: .86rem;
           line-height: 1.45;
+        }
+
+        .account-empty-link {
+          display: inline-block;
+          margin: var(--space-8) 0 var(--space-4);
+          color: var(--color-primary);
+          font-size: .86rem;
+          line-height: 1.4;
+          font-weight: 650;
+          text-decoration: underline;
+          text-underline-offset: 3px;
         }
 
         .metric-band {
@@ -2350,12 +2377,30 @@ def select_index(options, value):
     return 0
 
 
-def select_options_with_empty(options, current_value=""):
-    normalized = [""] + [item for item in options if item]
+def select_options_with_empty(options, current_value="", excluded_options=None):
+    excluded = {str(item).strip() for item in (excluded_options or []) if str(item or "").strip()}
+    normalized = [""] + [item for item in options if item and str(item).strip() not in excluded]
     current_value = str(current_value or "").strip()
-    if current_value and current_value not in normalized:
+    if current_value and current_value not in normalized and current_value not in excluded:
         normalized.append(current_value)
     return normalized
+
+
+def has_available_account_option(options):
+    return any(str(item or "").strip() for item in options)
+
+
+def render_no_available_account_link(options):
+    if has_available_account_option(options):
+        return
+    st.markdown(
+        (
+            f'<a class="account-empty-link" href="{esc(page_href("新增账号"))}" target="_self">'
+            f'{esc(tr("当前无可用账户，前往添加"))}'
+            '</a>'
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def validate_decimal_text(value, field_name):
@@ -2556,17 +2601,34 @@ def normalize_symbol_rows(rows):
     return normalized
 
 
-def follower_side_fields(unit_name, leg_name, idx, title, account_options, existing):
+def follower_side_fields(
+        unit_name,
+        leg_name,
+        idx,
+        title,
+        account_options,
+        existing,
+        master_account="",
+        selected_peer_accounts=None):
     st.markdown(f'<div class="follower-column-title">{esc(tr(title))}</div>', unsafe_allow_html=True)
-    current_account = str(existing.get("account") or "").strip()
-    options = select_options_with_empty(account_options, current_account)
+    account_key = f"{unit_name}_{leg_name}_follower_{idx}_account"
+    current_account = str(st.session_state.get(account_key, existing.get("account") or "") or "").strip()
+    master_account = str(master_account or "").strip()
+    excluded_accounts = [master_account]
+    excluded_accounts.extend(
+        account for account in (selected_peer_accounts or [])
+        if str(account or "").strip() and str(account).strip() != current_account
+    )
+    options = select_options_with_empty(account_options, current_account, excluded_options=excluded_accounts)
+    selected_account = current_account if current_account in options else ""
     account = st.selectbox(
         tr("选择子账户"),
         options,
-        index=select_index(options, current_account),
+        index=select_index(options, selected_account),
         format_func=lambda value: tr("未选择") if value == "" else value,
-        key=f"{unit_name}_{leg_name}_follower_{idx}_account",
+        key=account_key,
     )
+    render_no_available_account_link(options)
     enabled = st.checkbox(
         tr("是否启用"),
         value=bool(existing.get("enabled", False)),
@@ -2588,26 +2650,35 @@ def follower_pair_label(index, source_existing, hedge_existing):
     return f"{tr('子账号对')} #{index}"
 
 
-def follower_pair_accounts_label(source_existing, hedge_existing):
-    source_account = str(source_existing.get("account") or tr("未选择")).strip()
-    hedge_account = str(hedge_existing.get("account") or tr("未选择")).strip()
+def follower_pair_accounts_label(source_existing, hedge_existing, source_master="", hedge_master=""):
+    source_value = str(source_existing.get("account") or "").strip()
+    hedge_value = str(hedge_existing.get("account") or "").strip()
+    source_account = source_value if source_value and source_value != str(source_master or "").strip() else tr("未选择")
+    hedge_account = hedge_value if hedge_value and hedge_value != str(hedge_master or "").strip() else tr("未选择")
     return f"{source_account} / {hedge_account}"
 
 
-def inject_follower_pair_summary_labels(labels):
+def inject_follower_pair_summary_labels(unit_name, labels):
     if not labels:
         return
     payload = json.dumps(labels, ensure_ascii=False)
+    unit_name_json = json.dumps(str(unit_name or ""), ensure_ascii=False)
     title_prefix = json.dumps(f"{tr('子账号对')} #", ensure_ascii=False)
     components.html(
         f"""
         <script>
         (() => {{
           const labels = {payload};
+          const unitName = {unit_name_json};
           const titlePrefix = {title_prefix};
           const parentDoc = window.parent.document;
           const applyLabels = () => {{
-            const summaries = Array.from(parentDoc.querySelectorAll('details summary'))
+            const unitDetails = Array.from(parentDoc.querySelectorAll('details')).find((details) => {{
+              const summary = details.querySelector(':scope > summary');
+              return summary && summary.textContent.includes(unitName);
+            }});
+            const searchRoot = unitDetails || parentDoc;
+            const summaries = Array.from(searchRoot.querySelectorAll('details summary'))
               .filter((summary) => summary.textContent.includes(titlePrefix));
             labels.forEach((item, index) => {{
               const summary = summaries[index];
@@ -2663,6 +2734,22 @@ def render_follower_pair_editor(
     edited_hedge_rows = []
     summary_labels = []
     visible_idx = 0
+    selected_source_accounts = []
+    selected_hedge_accounts = []
+    for idx in range(row_count):
+        if idx in deleted_indexes:
+            continue
+        source_existing = source_followers[idx] if idx < len(source_followers) else {}
+        hedge_existing = hedge_followers[idx] if idx < len(hedge_followers) else {}
+        source_key = f"{unit_name}_source_follower_{idx}_account"
+        hedge_key = f"{unit_name}_hedge_follower_{idx}_account"
+        source_account = str(st.session_state.get(source_key, source_existing.get("account") or "") or "").strip()
+        hedge_account = str(st.session_state.get(hedge_key, hedge_existing.get("account") or "") or "").strip()
+        if source_account:
+            selected_source_accounts.append(source_account)
+        if hedge_account:
+            selected_hedge_accounts.append(hedge_account)
+
     for idx in range(row_count):
         if idx in deleted_indexes:
             continue
@@ -2670,7 +2757,24 @@ def render_follower_pair_editor(
         visible_idx += 1
         source_existing = source_followers[idx] if idx < len(source_followers) else {}
         hedge_existing = hedge_followers[idx] if idx < len(hedge_followers) else {}
-        summary_labels.append({"accounts": follower_pair_accounts_label(source_existing, hedge_existing)})
+        source_key = f"{unit_name}_source_follower_{idx}_account"
+        hedge_key = f"{unit_name}_hedge_follower_{idx}_account"
+        source_current = {
+            **source_existing,
+            "account": st.session_state.get(source_key, source_existing.get("account") or ""),
+        }
+        hedge_current = {
+            **hedge_existing,
+            "account": st.session_state.get(hedge_key, hedge_existing.get("account") or ""),
+        }
+        summary_labels.append({
+            "accounts": follower_pair_accounts_label(
+                source_current,
+                hedge_current,
+                source_master=source_master,
+                hedge_master=hedge_master,
+            )
+        })
         with st.expander(
                 follower_pair_label(visible_idx, source_existing, hedge_existing),
                 expanded=(idx == expanded_pair_index)):
@@ -2683,6 +2787,8 @@ def render_follower_pair_editor(
                     "Gate 子账户",
                     gate_accounts,
                     source_existing,
+                    master_account=source_master,
+                    selected_peer_accounts=selected_source_accounts,
                 )
             with col2:
                 hedge_row = follower_side_fields(
@@ -2692,6 +2798,8 @@ def render_follower_pair_editor(
                     "Websea 子账户",
                     websea_accounts,
                     hedge_existing,
+                    master_account=hedge_master,
+                    selected_peer_accounts=selected_hedge_accounts,
                 )
             if st.button(tr("删除子账户对"), key=f"{unit_name}_follower_pair_{idx}_delete"):
                 deleted_indexes.add(idx)
@@ -2708,18 +2816,21 @@ def render_follower_pair_editor(
         st.session_state[expanded_key] = row_count
         st.rerun()
     st.divider()
-    inject_follower_pair_summary_labels(summary_labels)
+    inject_follower_pair_summary_labels(unit_name, summary_labels)
 
     return edited_source_rows, edited_hedge_rows
 
 
-def normalize_follower_config(rows, field_name):
+def normalize_follower_config(rows, field_name, forbidden_accounts=None):
     normalized = []
     seen = set()
+    forbidden = {str(item).strip() for item in (forbidden_accounts or []) if str(item or "").strip()}
     for row in rows:
         account = str(row.get("account") or "").strip()
         if not account:
             continue
+        if account in forbidden:
+            raise ValueError(f"{tr(field_name)}：子账户不能与当前策略单元的主账户相同，请重新选择。")
         if account in seen:
             raise ValueError(f"{tr(field_name)}：{tr('子账户不能重复')}")
         seen.add(account)
@@ -3530,7 +3641,8 @@ def main():
         render_section("策略单元配置", "策略单元定义 Gate source 与 Websea hedge 的主从关系。")
         gate_accounts = account_names(accounts_data, "gate")
         websea_accounts = account_names(accounts_data, "websea")
-        target_unit_name = requested_unit_name()
+        pending_target_unit = str(st.session_state.get("pending_strategy_unit_target") or "").strip()
+        target_unit_name = pending_target_unit or requested_unit_name()
 
         render_section("新增策略单元")
         new_unit_name = st.text_input(tr("策略单元名称"), key="new_unit_name")
@@ -3542,8 +3654,11 @@ def main():
             if any(u.get("name") == new_unit_name.strip() for u in strategy_data.get("units", [])):
                 st.error(tr("策略单元名称已存在"))
                 st.stop()
-            strategy_data.setdefault("units", []).append(default_unit(new_unit_name.strip()))
+            created_unit_name = new_unit_name.strip()
+            strategy_data.setdefault("units", []).append(default_unit(created_unit_name))
             save_json(STRATEGY_PATH, strategy_data)
+            st.session_state["pending_strategy_unit_target"] = created_unit_name
+            set_query_target("策略配置", unit=created_unit_name)
             st.success(tr("已新增策略单元"))
             st.rerun()
 
@@ -3561,61 +3676,66 @@ def main():
                 hedge = unit.setdefault("hedge", {})
 
                 enabled = st.checkbox(tr("启用策略单元"), value=bool(unit.get("enabled", True)), key=f"{unit.get('name')}_enabled")
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("#### Source / Gate")
-                    source_accounts = select_options_with_empty(gate_accounts, source.get("account"))
-                    source_account = st.selectbox(
-                        tr("Source 主账号"),
-                        source_accounts,
-                        index=select_index(source_accounts, source.get("account")),
-                        format_func=lambda value: tr("未选择") if value == "" else value,
-                        key=f"{unit.get('name')}_source_account",
-                    )
-                    source_leverage = st.number_input(
-                        tr("Source 杠杆"),
-                        min_value=1,
-                        max_value=200,
-                        value=int(source.get("leverage") or 10),
-                        key=f"{unit.get('name')}_source_leverage",
-                    )
-                    source_margin_mode = st.selectbox(
-                        tr("Source 保证金模式"),
-                        ["cross", "isolated"],
-                        index=select_index(["cross", "isolated"], source.get("margin_mode", "cross")),
-                        key=f"{unit.get('name')}_source_margin",
-                    )
-                    source_settle = st.text_input("Source settle", value=source.get("settle", "usdt"), key=f"{unit.get('name')}_source_settle")
-                with col2:
-                    st.markdown("#### Hedge / Websea")
-                    hedge_accounts = select_options_with_empty(websea_accounts, hedge.get("account"))
-                    hedge_account = st.selectbox(
-                        tr("Hedge 主账号"),
-                        hedge_accounts,
-                        index=select_index(hedge_accounts, hedge.get("account")),
-                        format_func=lambda value: tr("未选择") if value == "" else value,
-                        key=f"{unit.get('name')}_hedge_account",
-                    )
-                    hedge_mode = st.selectbox(
-                        tr("Hedge 模式"),
-                        ["opposite", "same"],
-                        index=select_index(["opposite", "same"], hedge.get("mode", "opposite")),
-                        key=f"{unit.get('name')}_hedge_mode",
-                    )
-                    hedge_ratio = st.text_input(tr("Hedge 比例"), value=str(hedge.get("ratio", "1")), key=f"{unit.get('name')}_hedge_ratio")
-                    hedge_leverage = st.number_input(
-                        tr("Hedge 杠杆"),
-                        min_value=1,
-                        max_value=200,
-                        value=int(hedge.get("leverage") or 10),
-                        key=f"{unit.get('name')}_hedge_leverage",
-                    )
-                    hedge_margin_mode = st.selectbox(
-                        tr("Hedge 保证金模式"),
-                        ["cross", "isolated"],
-                        index=select_index(["cross", "isolated"], hedge.get("margin_mode", "cross")),
-                        key=f"{unit.get('name')}_hedge_margin",
-                    )
+                st.markdown(f'<div class="follower-config-intro">{esc(tr("主账户配置"))}</div>', unsafe_allow_html=True)
+                st.caption(tr("配置 Gate Source 与 Websea Hedge 的主账号、对冲比例、杠杆和保证金模式。"))
+                with st.container(border=True):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.markdown("#### Source / Gate")
+                        source_accounts = select_options_with_empty(gate_accounts, source.get("account"))
+                        source_account = st.selectbox(
+                            tr("Source 主账号"),
+                            source_accounts,
+                            index=select_index(source_accounts, source.get("account")),
+                            format_func=lambda value: tr("未选择") if value == "" else value,
+                            key=f"{unit.get('name')}_source_account",
+                        )
+                        render_no_available_account_link(source_accounts)
+                        source_leverage = st.number_input(
+                            tr("Source 杠杆"),
+                            min_value=1,
+                            max_value=200,
+                            value=int(source.get("leverage") or 10),
+                            key=f"{unit.get('name')}_source_leverage",
+                        )
+                        source_margin_mode = st.selectbox(
+                            tr("Source 保证金模式"),
+                            ["cross", "isolated"],
+                            index=select_index(["cross", "isolated"], source.get("margin_mode", "cross")),
+                            key=f"{unit.get('name')}_source_margin",
+                        )
+                        source_settle = st.text_input("Source settle", value=source.get("settle", "usdt"), key=f"{unit.get('name')}_source_settle")
+                    with col2:
+                        st.markdown("#### Hedge / Websea")
+                        hedge_accounts = select_options_with_empty(websea_accounts, hedge.get("account"))
+                        hedge_account = st.selectbox(
+                            tr("Hedge 主账号"),
+                            hedge_accounts,
+                            index=select_index(hedge_accounts, hedge.get("account")),
+                            format_func=lambda value: tr("未选择") if value == "" else value,
+                            key=f"{unit.get('name')}_hedge_account",
+                        )
+                        render_no_available_account_link(hedge_accounts)
+                        hedge_mode = st.selectbox(
+                            tr("Hedge 模式"),
+                            ["opposite", "same"],
+                            index=select_index(["opposite", "same"], hedge.get("mode", "opposite")),
+                            key=f"{unit.get('name')}_hedge_mode",
+                        )
+                        hedge_ratio = st.text_input(tr("Hedge 比例"), value=str(hedge.get("ratio", "1")), key=f"{unit.get('name')}_hedge_ratio")
+                        hedge_leverage = st.number_input(
+                            tr("Hedge 杠杆"),
+                            min_value=1,
+                            max_value=200,
+                            value=int(hedge.get("leverage") or 10),
+                            key=f"{unit.get('name')}_hedge_leverage",
+                        )
+                        hedge_margin_mode = st.selectbox(
+                            tr("Hedge 保证金模式"),
+                            ["cross", "isolated"],
+                            index=select_index(["cross", "isolated"], hedge.get("margin_mode", "cross")),
+                            key=f"{unit.get('name')}_hedge_margin",
+                        )
 
                 edited_source_followers, edited_hedge_followers = render_follower_pair_editor(
                     unit_name=unit_name,
@@ -3651,8 +3771,16 @@ def main():
                                 "margin_mode": hedge_margin_mode,
                             })
 
-                            source["followers"] = normalize_follower_config(edited_source_followers, "Gate 子账户")
-                            hedge["followers"] = normalize_follower_config(edited_hedge_followers, "Websea 子账户")
+                            source["followers"] = normalize_follower_config(
+                                edited_source_followers,
+                                "Gate 子账户",
+                                forbidden_accounts=[source_account],
+                            )
+                            hedge["followers"] = normalize_follower_config(
+                                edited_hedge_followers,
+                                "Websea 子账户",
+                                forbidden_accounts=[hedge_account],
+                            )
 
                             save_json(STRATEGY_PATH, strategy_data)
                             st.success(tr("策略单元已保存"))
@@ -3700,6 +3828,8 @@ def main():
                 """,
                 height=0,
             )
+            if st.session_state.get("pending_strategy_unit_target") == target_unit_name:
+                st.session_state.pop("pending_strategy_unit_target", None)
 
     if page == "交易对配置":
         render_section("交易对配置", "交易对规则决定 Gate 仓位如何换算成 Websea 目标仓位。")

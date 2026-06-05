@@ -1,51 +1,73 @@
 {
   "units": [
     {
-      "name": "unit_1",
+      "name": "q1",
       "enabled": true,
       "source": {
-        "account": "gata-m-4",
+        "account": "",
         "exchange": "gate",
         "settle": "usdt",
         "leverage": 10,
-        "margin_mode": "isolated",
-        "followers": [
-          {
-            "account": "gate-s-3",
-            "ratio": "1",
-            "enabled": false
-          },
-          {
-            "account": "gate-s-1",
-            "ratio": "1",
-            "enabled": false
-          }
-        ]
+        "margin_mode": "cross",
+        "followers": []
       },
       "hedge": {
-        "account": "websea-m-1",
+        "account": "",
         "exchange": "websea",
-        "mode": "same",
+        "mode": "opposite",
         "ratio": "1",
         "leverage": 10,
         "margin_mode": "cross",
-        "followers": [
-          {
-            "account": "websea-s-2",
-            "ratio": "1",
-            "enabled": false
-          },
-          {
-            "account": "websea-s-1",
-            "ratio": "1",
-            "enabled": false
-          }
-        ]
+        "followers": []
       },
       "symbols": []
     },
     {
-      "name": "T3",
+      "name": "unit_1",
+      "enabled": true,
+      "source": {
+        "account": "g1",
+        "exchange": "gate",
+        "settle": "usdt",
+        "leverage": 10,
+        "margin_mode": "cross",
+        "followers": []
+      },
+      "hedge": {
+        "account": "",
+        "exchange": "websea",
+        "mode": "opposite",
+        "ratio": "1",
+        "leverage": 10,
+        "margin_mode": "cross",
+        "followers": []
+      },
+      "symbols": []
+    },
+    {
+      "name": "q2",
+      "enabled": true,
+      "source": {
+        "account": "",
+        "exchange": "gate",
+        "settle": "usdt",
+        "leverage": 10,
+        "margin_mode": "cross",
+        "followers": []
+      },
+      "hedge": {
+        "account": "",
+        "exchange": "websea",
+        "mode": "opposite",
+        "ratio": "1",
+        "leverage": 10,
+        "margin_mode": "cross",
+        "followers": []
+      },
+      "symbols": []
+    },
+    {
+      "name": "q4",
       "enabled": true,
       "source": {
         "account": "",
