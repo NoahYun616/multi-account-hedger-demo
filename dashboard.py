@@ -37,6 +37,16 @@ PAGE_LABELS = {
     "使用说明": "使用说明",
 }
 
+NAV_ITEMS = [
+    ("分组总览", "overview"),
+    ("账号管理", "accounts"),
+    ("新增账号", "add"),
+    ("策略配置", "strategy"),
+    ("交易对配置", "symbols"),
+    ("原始配置", "config"),
+    ("使用说明", "guide"),
+]
+
 I18N = {
     "en": {
         "Gate + Websea 仓位跟随控制台": "Gate + Websea Position Sync Console",
@@ -65,7 +75,7 @@ I18N = {
         "交易对": "Symbols",
         "原始配置": "Raw Config",
         "使用说明": "Guide",
-        "查看 Gate 与 Websea 的账号配对、跟随开关、实时余额和持仓。": "View Gate/Websea account pairs, follow switches, live balances, and positions.",
+        "查看运行状态、配置检查和账号配对。": "View runtime status, config checks, and account pairs.",
         "维护交易账号、启用状态、接口地址和密钥。": "Manage exchange accounts, enabled state, API endpoints, and credentials.",
         "新增 Gate 或 Websea 账号，并挂载到指定策略单元。": "Add a Gate or Websea account and attach it to a strategy unit.",
         "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。": "Configure master accounts, hedge direction, leverage, margin mode, and followers.",
@@ -79,6 +89,8 @@ I18N = {
         "实时账户信息": "Live Account Info",
         "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。": "Read exchange balances and positions by account. Missing credentials or permission errors are shown in the table.",
         "刷新实时账户信息": "Refresh Live Account Info",
+        "尚未读取实时账户信息": "Live account info has not been loaded",
+        "点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。": "Click Refresh Live Account Info to show balances and positions here. Accounts that fail to load will show the error reason.",
         "实时余额": "Live Balances",
         "实时持仓": "Live Positions",
         "当前无持仓": "No open positions",
@@ -187,6 +199,12 @@ I18N = {
         "模拟运行中。当前配置默认不会真实下单。": "Dry run mode. Current config should not submit real orders by default.",
         "危险操作区": "Danger Zone",
         "该区域会修改敏感配置，请确认后再保存。": "This area changes sensitive config. Review before saving.",
+        "真实下单必须以危险色展示。": "Live trading must be shown with danger styling.",
+        "控制台": "Console",
+        "深色模式": "Dark mode",
+        "浅色模式": "Light mode",
+        "收起": "Collapse",
+        "展开": "Expand",
     }
 }
 
@@ -345,7 +363,7 @@ source 到 hedge 的同步张数比例。
 """
 
 PAGE_META = {
-    "分组总览": ("总览", "查看运行状态、配置检查、账号配对、实时余额和持仓。"),
+    "分组总览": ("总览", "查看运行状态、配置检查和账号配对。"),
     "账号管理": ("账号", "维护交易账号、启用状态、接口地址和密钥。"),
     "新增账号": ("新增账号", "新增 Gate 或 Websea 账号，并挂载到指定策略单元。"),
     "策略配置": ("策略", "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。"),
@@ -378,6 +396,72 @@ def page_from_label(label):
     return label
 
 
+def current_page_from_query():
+    return st.session_state.get("current_page", PAGES[0])
+
+
+def current_sidebar_mode():
+    mode = st.session_state.get("sidebar_mode", "expanded")
+    return "collapsed" if mode == "collapsed" else "expanded"
+
+
+def current_theme():
+    theme = st.session_state.get("theme", "light")
+    return "dark" if theme == "dark" else "light"
+
+
+def init_ui_state():
+    if "language" not in st.session_state:
+        lang = st.query_params.get("lang", "zh")
+        st.session_state["language"] = lang if lang in LANGUAGE_OPTIONS.values() else "zh"
+    if "current_page" not in st.session_state:
+        page_key = st.query_params.get("page", PAGES[0])
+        st.session_state["current_page"] = next(
+            (page for page, slug in NAV_ITEMS if page_key in (slug, page)),
+            PAGES[0],
+        )
+    if "sidebar_mode" not in st.session_state:
+        sidebar = st.query_params.get("sidebar", "expanded")
+        st.session_state["sidebar_mode"] = "collapsed" if sidebar == "collapsed" else "expanded"
+    if "theme" not in st.session_state:
+        theme = st.query_params.get("theme", "light")
+        st.session_state["theme"] = "dark" if theme == "dark" else "light"
+
+
+def set_current_page(page):
+    st.session_state["current_page"] = page
+
+
+def set_current_page_from_nav():
+    page = st.session_state.get("sidebar_nav", PAGES[0])
+    if page in PAGES:
+        st.session_state["current_page"] = page
+
+
+def set_language(lang):
+    if lang in LANGUAGE_OPTIONS.values():
+        st.session_state["language"] = lang
+
+
+def toggle_sidebar():
+    st.session_state["sidebar_mode"] = "expanded" if current_sidebar_mode() == "collapsed" else "collapsed"
+
+
+def toggle_theme():
+    st.session_state["theme"] = "light" if current_theme() == "dark" else "dark"
+
+
+def app_href(page_slug=None, lang=None, sidebar=None, theme=None):
+    params = {}
+    current_page = current_page_from_query()
+    current_slug = next((slug for page, slug in NAV_ITEMS if page == current_page), NAV_ITEMS[0][1])
+    params["page"] = page_slug or current_slug
+    params["lang"] = lang or current_language()
+    params["sidebar"] = sidebar or current_sidebar_mode()
+    params["theme"] = theme or current_theme()
+    return f"?{urllib.parse.urlencode(params)}"
+
+
 class DashboardRuntime:
     http_timeout = 10
     order_retry_times = 3
@@ -406,6 +490,8 @@ def save_text(path: Path, text: str):
 
 
 def inject_theme():
+    sidebar_mode = current_sidebar_mode()
+    theme = current_theme()
     st.markdown(
         """
         <style>
@@ -442,6 +528,7 @@ def inject_theme():
           --radius-md: 12px;
           --radius-sm: 8px;
           --shadow-card: 0 1px 3px rgba(15, 23, 42, .05), 0 10px 30px rgba(15, 23, 42, .04);
+          --sidebar-width: 276px;
         }
 
         .stApp {
@@ -458,7 +545,10 @@ def inject_theme():
         div[data-testid="stAppDeployButton"],
         div[data-testid="stToolbarActions"],
         div[data-testid="stDecoration"],
-        div[data-testid="stStatusWidget"] {
+        div[data-testid="stStatusWidget"],
+        button[data-testid="stBaseButton-headerNoPadding"],
+        button[data-testid="stExpandSidebarButton"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
           display: none !important;
           visibility: hidden !important;
           height: 0 !important;
@@ -475,24 +565,6 @@ def inject_theme():
           min-height: 0 !important;
         }
 
-        button[data-testid="stBaseButton-headerNoPadding"] {
-          visibility: visible !important;
-        }
-
-        button[data-testid="stExpandSidebarButton"] {
-          position: fixed !important;
-          top: var(--space-16) !important;
-          left: var(--space-16) !important;
-          z-index: 1000001 !important;
-          width: 32px !important;
-          height: 32px !important;
-          border: 1px solid var(--color-border-strong) !important;
-          border-radius: var(--radius-sm) !important;
-          background: var(--color-bg-container) !important;
-          color: var(--color-text) !important;
-          box-shadow: 0 10px 24px rgba(15, 23, 42, .10) !important;
-        }
-
         .block-container {
           padding-top: var(--space-16);
           padding-bottom: 3rem;
@@ -500,38 +572,220 @@ def inject_theme():
         }
 
         section[data-testid="stSidebar"] {
+          width: var(--sidebar-width) !important;
+          min-width: var(--sidebar-width) !important;
+          max-width: var(--sidebar-width) !important;
           background: var(--color-bg-container);
           border-right: 1px solid var(--color-border);
           color: var(--color-text);
+          transition: width .18s ease, min-width .18s ease, max-width .18s ease;
         }
 
         section[data-testid="stSidebar"] * {
           color: var(--color-text) !important;
         }
 
-        section[data-testid="stSidebar"] h1 {
-          font-size: 1.35rem;
-          color: var(--color-text);
-          margin-bottom: .1rem;
+        section[data-testid="stSidebar"] > div:first-child {
+          min-height: 100vh;
+          padding: 0 var(--space-12) var(--space-16);
         }
 
-        section[data-testid="stSidebar"] [role="radiogroup"] label {
-          border-radius: var(--radius-md);
-          padding: .45rem .55rem;
-          margin-bottom: .2rem;
-          border: 1px solid transparent;
+        section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
+          display: none !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+          padding-top: var(--space-16) !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+          gap: var(--space-8);
+          min-height: calc(100vh - 32px);
+        }
+
+        .sidebar-brand {
+          display: flex;
+          align-items: center;
+          gap: var(--space-12);
+          padding: var(--space-4) var(--space-4) var(--space-24);
+          border-bottom: 1px solid var(--color-border);
+          margin-bottom: var(--space-16);
+        }
+
+        .sidebar-mark {
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-lg);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--color-primary-bg);
+          color: var(--color-primary-text) !important;
+          border: 1px solid #CCFBF1;
+          box-shadow: 0 8px 22px rgba(20, 184, 166, .12);
+          font-weight: 760;
+          letter-spacing: 0;
+        }
+
+        .sidebar-title {
+          font-size: 1rem;
+          line-height: 1.4;
+          font-weight: 760;
+          color: var(--color-text);
+          letter-spacing: 0;
+        }
+
+        .sidebar-nav {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+          padding: 0 var(--space-4);
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+          padding: 0 var(--space-4);
         }
 
         section[data-testid="stSidebar"] [role="radiogroup"] label,
-        section[data-testid="stSidebar"] [role="radiogroup"] label p,
-        section[data-testid="stSidebar"] [role="radiogroup"] label span,
-        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-          color: var(--text) !important;
+        .sidebar-control {
+          position: relative;
+          display: flex;
+          align-items: center;
+          min-height: 40px;
+          padding: var(--space-8) var(--space-12);
+          border-radius: var(--radius-md);
+          border: 1px solid transparent;
+          color: var(--color-text-secondary) !important;
+          text-decoration: none !important;
+          font-size: .9rem;
+          line-height: 1.35;
+          font-weight: 620;
+          width: 100%;
+          box-shadow: none;
+          overflow: hidden;
         }
 
-        section[data-testid="stSidebar"] [role="radiogroup"] label:hover {
+        section[data-testid="stSidebar"] [role="radiogroup"] label:hover,
+        .sidebar-control:hover {
+          background: var(--color-bg-subtle);
+          color: var(--color-text) !important;
+          text-decoration: none !important;
+        }
+
+        .sidebar-resume-button {
+          position: fixed;
+          left: var(--space-16);
+          top: var(--space-16);
+          z-index: 100000;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--color-border);
+          background: var(--color-bg-container);
+          color: var(--color-primary-text) !important;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, .10);
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: 760;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
           background: var(--color-primary-bg);
           border-color: #CCFBF1;
+          color: var(--color-primary-text) !important;
+          font-weight: 720;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked)::before {
+          content: "";
+          position: absolute;
+          left: -5px;
+          top: 9px;
+          bottom: 9px;
+          width: 3px;
+          border-radius: 999px;
+          background: var(--color-primary);
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] input {
+          display: none !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child {
+          display: none !important;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] label > div:last-child {
+          min-width: 0;
+        }
+
+        section[data-testid="stSidebar"] [role="radiogroup"] label p {
+          margin: 0 !important;
+          color: inherit !important;
+          font-size: inherit;
+          font-weight: inherit;
+          line-height: inherit;
+          white-space: nowrap;
+        }
+
+        .sidebar-nav-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: var(--radius-sm);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--color-text-secondary) !important;
+          font-size: .98rem;
+          font-weight: 650;
+        }
+
+        .sidebar-controls {
+          position: fixed;
+          left: var(--space-12);
+          bottom: var(--space-16);
+          width: calc(var(--sidebar-width) - 24px);
+          z-index: 100;
+          padding: var(--space-16) var(--space-4) 0;
+          border-top: 1px solid var(--color-border);
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-8);
+        }
+
+        .sidebar-control {
+          display: grid;
+          grid-template-columns: 28px minmax(0, 1fr);
+          align-items: center;
+          min-height: 40px;
+          gap: var(--space-8);
+          padding: var(--space-8) var(--space-12);
+          border-radius: var(--radius-md);
+          color: var(--color-text-secondary) !important;
+          text-decoration: none !important;
+          font-size: .88rem;
+          line-height: 1.35;
+          font-weight: 620;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+          font-family: inherit;
+        }
+
+        .sidebar-control:hover {
+          background: var(--color-bg-subtle);
+          color: var(--color-text) !important;
+          text-decoration: none !important;
         }
 
         label,
@@ -553,16 +807,27 @@ def inject_theme():
         .app-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: stretch;
           gap: var(--space-16);
-          padding: 0 0 var(--space-16);
-          border: 0;
-          background: transparent;
-          margin-bottom: .15rem;
+          min-height: 72px;
+          padding: var(--space-12) var(--space-24);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          background: rgba(255, 255, 255, .88);
+          box-shadow: 0 1px 3px rgba(15, 23, 42, .04);
+          margin-bottom: var(--space-24);
+          backdrop-filter: blur(12px);
+        }
+
+        .app-header-main {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
         }
 
         .app-title {
-          font-size: 1.45rem;
+          font-size: 1.38rem;
           line-height: 1.2;
           font-weight: 760;
           color: var(--color-text);
@@ -571,17 +836,93 @@ def inject_theme():
         }
 
         .app-subtitle {
-          margin-top: .35rem;
+          margin-top: var(--space-4);
           color: var(--color-text-secondary);
-          font-size: .92rem;
+          font-size: .88rem;
         }
 
-        .status-row {
+        .topbar-actions {
           display: flex;
-          flex-wrap: wrap;
+          align-items: center;
+          flex-wrap: nowrap;
           gap: var(--space-8);
           justify-content: flex-end;
-          max-width: 520px;
+          align-content: center;
+          min-width: 360px;
+        }
+
+        .user-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-8);
+          min-height: 34px;
+          padding: var(--space-4) var(--space-12) var(--space-4) var(--space-4);
+          border-radius: var(--radius-md);
+          color: var(--color-text) !important;
+          white-space: nowrap;
+        }
+
+        .user-avatar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 30px;
+          height: 30px;
+          border-radius: 999px;
+          background: var(--color-primary);
+          color: #ffffff !important;
+          font-size: .76rem;
+          font-weight: 760;
+        }
+
+        .user-name {
+          display: block;
+          font-size: .86rem;
+          line-height: 1.15;
+          font-weight: 700;
+          color: var(--color-text) !important;
+        }
+
+        .user-role {
+          display: block;
+          margin-top: 2px;
+          font-size: .72rem;
+          line-height: 1.1;
+          color: var(--color-text-secondary) !important;
+        }
+
+        .language-switch {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-4);
+          min-height: 32px;
+          padding: 0 var(--space-8);
+          border-radius: var(--radius-md);
+          color: var(--color-text-secondary) !important;
+          font-size: .86rem;
+          font-weight: 650;
+          white-space: nowrap;
+        }
+
+        .language-link {
+          color: var(--color-text-secondary) !important;
+          text-decoration: none !important;
+          padding: 2px 4px;
+          border-radius: var(--radius-sm);
+        }
+
+        .language-link.active {
+          color: var(--color-primary-text) !important;
+          background: var(--color-primary-bg);
+        }
+
+        .language-link:hover {
+          color: var(--color-primary-text) !important;
+          text-decoration: none !important;
+        }
+
+        .language-separator {
+          color: var(--color-text-tertiary) !important;
         }
 
         .status-pill {
@@ -904,8 +1245,10 @@ def inject_theme():
           .app-header {
             flex-direction: column;
           }
-          .status-row {
+          .topbar-actions {
             justify-content: flex-start;
+            min-width: 0;
+            flex-wrap: wrap;
           }
           .metric-band {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -921,6 +1264,139 @@ def inject_theme():
         """,
         unsafe_allow_html=True,
     )
+    st.markdown(
+        """
+        <style>
+        :root[data-websea-theme="dark"] {
+          --color-bg-layout: #020617;
+          --color-bg-container: #0F172A;
+          --color-bg-subtle: #111827;
+          --color-bg-table-header: #111827;
+          --color-border: #1F2937;
+          --color-border-strong: #334155;
+          --color-text: #F3F4F6;
+          --color-text-secondary: #CBD5E1;
+          --color-text-tertiary: #94A3B8;
+          --color-primary-bg: rgba(20, 184, 166, .14);
+          --color-primary-text: #5EEAD4;
+          --color-success-bg: rgba(5, 150, 105, .16);
+          --color-warning-bg: rgba(217, 119, 6, .16);
+          --color-danger-bg: rgba(225, 29, 72, .16);
+          --color-info-bg: rgba(37, 99, 235, .18);
+          --shadow-card: 0 1px 2px rgba(0, 0, 0, .22), 0 18px 38px rgba(0, 0, 0, .22);
+        }
+
+        :root[data-websea-theme="dark"] .stApp {
+          background:
+            radial-gradient(circle at 58% 6%, rgba(20, 184, 166, .13), transparent 34rem),
+            radial-gradient(circle at 92% 28%, rgba(37, 99, 235, .11), transparent 28rem),
+            var(--color-bg-layout);
+        }
+
+        :root[data-websea-theme="dark"] .app-header {
+          background: rgba(15, 23, 42, .88);
+        }
+
+        :root[data-websea-theme="dark"] table.ws-table tbody td {
+          border-bottom-color: var(--color-border);
+        }
+
+        :root[data-websea-theme="dark"] table.ws-table tbody tr:hover td {
+          background: rgba(20, 184, 166, .08);
+        }
+
+        :root[data-websea-theme="dark"] table.ws-table thead th {
+          color: var(--color-text-secondary);
+        }
+
+        :root[data-websea-sidebar="collapsed"] section[data-testid="stSidebar"] {
+          width: 0 !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          border-right: 0 !important;
+          overflow: hidden !important;
+        }
+
+        :root[data-websea-sidebar="collapsed"] section[data-testid="stSidebar"] > div:first-child,
+        :root[data-websea-sidebar="collapsed"] section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+          padding: 0 !important;
+          width: 0 !important;
+          overflow: hidden !important;
+        }
+
+        :root[data-websea-sidebar="collapsed"] .sidebar-controls {
+          display: none !important;
+          pointer-events: none !important;
+        }
+
+        :root[data-websea-sidebar="collapsed"] .sidebar-resume-button {
+          display: inline-flex;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def inject_client_ui_script():
+    st.html(
+        """
+        <script>
+        (() => {
+          const applyUiState = () => {
+            const theme = localStorage.getItem("websea_theme") || "light";
+            const sidebar = localStorage.getItem("websea_sidebar") || "expanded";
+            document.documentElement.setAttribute("data-websea-theme", theme);
+            document.documentElement.setAttribute("data-websea-sidebar", sidebar);
+
+            document.querySelectorAll('[data-websea-action="toggle-theme"]').forEach((button) => {
+              const icon = button.querySelector("[data-websea-control-icon]");
+              const text = button.querySelector("[data-websea-control-text]");
+              const nextText = theme === "dark" ? "浅色模式" : "深色模式";
+              if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
+              if (text) text.textContent = nextText;
+              button.setAttribute("title", nextText);
+            });
+
+            document.querySelectorAll('[data-websea-action="toggle-sidebar"]').forEach((button) => {
+              const icon = button.querySelector("[data-websea-control-icon]");
+              const text = button.querySelector("[data-websea-control-text]");
+              const nextText = sidebar === "collapsed" ? "展开" : "收起";
+              if (icon) icon.textContent = sidebar === "collapsed" ? "»" : "«";
+              if (text) text.textContent = nextText;
+              button.setAttribute("title", nextText);
+            });
+          };
+
+          window.__webseaApplyUiState = applyUiState;
+          if (!window.__webseaUiStateBound) {
+            window.__webseaUiStateBound = true;
+            document.addEventListener("click", (event) => {
+              const target = event.target.closest("[data-websea-action]");
+              if (!target) return;
+              event.preventDefault();
+              const action = target.getAttribute("data-websea-action");
+              if (action === "toggle-theme") {
+                const current = localStorage.getItem("websea_theme") || "light";
+                localStorage.setItem("websea_theme", current === "dark" ? "light" : "dark");
+              }
+              if (action === "toggle-sidebar") {
+                const current = localStorage.getItem("websea_sidebar") || "expanded";
+                localStorage.setItem("websea_sidebar", current === "collapsed" ? "expanded" : "collapsed");
+              }
+              applyUiState();
+            });
+            new MutationObserver(() => requestAnimationFrame(applyUiState)).observe(document.body, {
+              childList: true,
+              subtree: true,
+            });
+          }
+          applyUiState();
+        })();
+        </script>
+        """,
+        unsafe_allow_javascript=True,
+    )
 
 
 def render_section(title, note=None):
@@ -935,6 +1411,69 @@ def esc(value):
 
 def status_pill(label, class_name=""):
     return f'<span class="status-pill {class_name}">{esc(label)}</span>'
+
+
+def sidebar_icon(icon):
+    icons = {
+        "overview": "⌘",
+        "accounts": "◇",
+        "add": "+",
+        "strategy": "↔",
+        "symbols": "#",
+        "config": "▣",
+        "guide": "?",
+    }
+    return icons.get(icon, "•")
+
+
+def render_sidebar_nav(active_page):
+    if st.session_state.get("sidebar_nav") not in PAGES:
+        st.session_state["sidebar_nav"] = active_page
+    nav_labels = {page: f"{sidebar_icon(slug)} {page_label(page)}" for page, slug in NAV_ITEMS}
+    st.radio(
+        tr("选择页面"),
+        PAGES,
+        index=PAGES.index(active_page) if active_page in PAGES else 0,
+        key="sidebar_nav",
+        format_func=lambda page: nav_labels.get(page, page_label(page)),
+        label_visibility="collapsed",
+        on_change=set_current_page_from_nav,
+    )
+
+
+def render_sidebar_controls():
+    theme = current_theme()
+    sidebar_mode = current_sidebar_mode()
+    theme_label = tr("浅色模式") if theme == "dark" else tr("深色模式")
+    sidebar_label = tr("展开") if sidebar_mode == "collapsed" else tr("收起")
+    theme_icon = "☀" if theme == "dark" else "☾"
+    sidebar_icon_text = "»" if sidebar_mode == "collapsed" else "«"
+    st.markdown(
+        f"""
+        <div class="sidebar-controls">
+          <button class="sidebar-control" data-websea-action="toggle-theme" type="button" title="{esc(theme_label)}">
+            <span class="sidebar-nav-icon" data-websea-control-icon>{esc(theme_icon)}</span>
+            <span class="sidebar-control-text" data-websea-control-text>{esc(theme_label)}</span>
+          </button>
+          <button class="sidebar-control" data-websea-action="toggle-sidebar" type="button" title="{esc(sidebar_label)}">
+            <span class="sidebar-nav-icon" data-websea-control-icon>{esc(sidebar_icon_text)}</span>
+            <span class="sidebar-control-text" data-websea-control-text>{esc(sidebar_label)}</span>
+          </button>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_resume_button():
+    st.markdown(
+        f"""
+        <button class="sidebar-resume-button" data-websea-action="toggle-sidebar" type="button" title="{esc(tr("展开"))}">
+          »
+        </button>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_empty(title, copy):
@@ -1165,6 +1704,19 @@ def render_metric_band(metrics):
     st.markdown("".join(html), unsafe_allow_html=True)
 
 
+def render_language_switch():
+    lang = current_language()
+    zh_cls = " active" if lang == "zh" else ""
+    en_cls = " active" if lang == "en" else ""
+    return (
+        '<div class="language-switch" aria-label="Language">'
+        f'<a class="language-link{zh_cls}" href="{app_href(lang="zh")}" target="_self">ZH</a>'
+        '<span class="language-separator">/</span>'
+        f'<a class="language-link{en_cls}" href="{app_href(lang="en")}" target="_self">EN</a>'
+        '</div>'
+    )
+
+
 def render_app_header(page, accounts_data, strategy_data, global_data):
     title, subtitle = PAGE_META.get(page, (page, ""))
     risk = risk_summary(accounts_data, strategy_data, global_data)
@@ -1181,18 +1733,28 @@ def render_app_header(page, accounts_data, strategy_data, global_data):
             status_pill(check_text, check_class),
             status_pill(f"{tr('最近更新')}：{risk['updated']}", "info"),
         ])
-    html = f"""
-    <div class="app-header">
-      <div>
-        <div class="app-title">{esc(tr(title))}</div>
-        <div class="app-subtitle">{esc(tr(subtitle))}</div>
-      </div>
-      <div class="status-row">
-        {status_html}
-      </div>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="app-header">
+          <div class="app-header-main">
+            <div class="app-title">{esc(tr(title))}</div>
+            <div class="app-subtitle">{esc(tr(subtitle))}</div>
+          </div>
+          <div class="topbar-actions">
+            {status_html}
+            {render_language_switch()}
+            <div class="user-chip">
+              <span class="user-avatar">WS</span>
+              <span>
+                <span class="user-name">Websea</span>
+                <span class="user-role">{esc(tr("控制台"))}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     render_mode_banner(global_data)
 
 
@@ -1871,24 +2433,31 @@ def help_page():
 
 def main():
     st.set_page_config(page_title="Multi Account Hedger", layout="wide", initial_sidebar_state="expanded")
+    init_ui_state()
     inject_theme()
+    inject_client_ui_script()
     ensure_files()
     accounts_data = load_json(ACCOUNTS_PATH)
     strategy_data = load_json(STRATEGY_PATH)
     global_data = load_json(GLOBAL_PATH)
+    page = current_page_from_query()
 
     with st.sidebar:
-        st.title("Multi Account Hedger")
-        selected_language = st.selectbox(
-            "Language / 语言",
-            list(LANGUAGE_OPTIONS.keys()),
-            index=list(LANGUAGE_OPTIONS.values()).index(current_language()) if current_language() in LANGUAGE_OPTIONS.values() else 0,
-            key="language_selector",
+        st.markdown(
+            """
+            <div class="sidebar-brand">
+              <div class="sidebar-mark">WS</div>
+              <div>
+                <div class="sidebar-title">Multi Account Hedger</div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        st.session_state["language"] = LANGUAGE_OPTIONS[selected_language]
-        st.caption(tr("Gate + Websea 仓位跟随控制台"))
-        page = st.radio(tr("选择页面"), PAGES, format_func=page_label)
+        render_sidebar_nav(page)
+        render_sidebar_controls()
 
+    render_sidebar_resume_button()
     render_app_header(page, accounts_data, strategy_data, global_data)
 
     if page == "分组总览":
@@ -1909,7 +2478,13 @@ def main():
         render_section("账号配对", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。")
         grouped_units_view(strategy_data, accounts_data)
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
-        if st.button(tr("刷新实时账户信息")):
+        live_account_requested = st.button(tr("刷新实时账户信息"))
+        if not live_account_requested:
+            render_empty(
+                "尚未读取实时账户信息",
+                "点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。",
+            )
+        else:
             runtime_rows = []
             position_rows = []
             amount_index = build_contract_amount_index(strategy_data)
