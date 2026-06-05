@@ -8,7 +8,7 @@
         "exchange": "gate",
         "settle": "usdt",
         "leverage": 10,
-        "margin_mode": "cross",
+        "margin_mode": "isolated",
         "followers": [
           {
             "account": "gate-s-1",
