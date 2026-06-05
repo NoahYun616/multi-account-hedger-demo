@@ -70,6 +70,7 @@ I18N = {
         "账号管理": "Accounts",
         "账号": "Accounts",
         "新增账号": "Add Account",
+        "新增": "Add",
         "策略配置": "Strategy",
         "策略": "Strategy",
         "交易对配置": "Symbols",
@@ -90,6 +91,7 @@ I18N = {
         "实时账户信息": "Live Account Info",
         "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。": "Read exchange balances and positions by account. Missing credentials or permission errors are shown in the table.",
         "刷新实时账户信息": "Refresh Live Account Info",
+        "刷新": "Refresh",
         "尚未读取实时账户信息": "Live account info has not been loaded",
         "点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。": "Click Refresh Live Account Info to show balances and positions here. Accounts that fail to load will show the error reason.",
         "实时余额": "Live Balances",
@@ -134,6 +136,25 @@ I18N = {
         "删除策略单元": "Delete Strategy Unit",
         "已删除策略单元": "Strategy unit deleted",
         "还没有策略单元": "No strategy units yet",
+        "请先在策略页面新增策略单元，再配置 Gate 与 Websea 的 master/sub 关系。": "Add a strategy unit on the Strategy page first, then configure the Gate and Websea master/sub relationship.",
+        "子账户配置": "Sub-account config",
+        "Gate 子账户": "Gate sub accounts",
+        "Websea 子账户": "Websea sub accounts",
+        "选择子账户": "Select sub account",
+        "是否启用": "Enabled",
+        "新增 Gate 子账户": "Add Gate sub account",
+        "新增 Websea 子账户": "Add Websea sub account",
+        "新增子账户对": "Add sub-account pair",
+        "删除子账户对": "Delete pair",
+        "删除": "Delete",
+        "未选择": "Not selected",
+        "暂无子账户": "No sub accounts",
+        "暂无子账户对": "No sub-account pairs",
+        "点击新增后配置跟随子账户。": "Click Add to configure follower sub accounts.",
+        "配置 Gate master 的跟随子账户、启用状态和跟随比例。": "Configure Gate master follower sub accounts, enabled state, and follow ratio.",
+        "配置 Websea master 的跟随子账户、启用状态和跟随比例。": "Configure Websea master follower sub accounts, enabled state, and follow ratio.",
+        "点击新增后会同时添加一组 Gate 与 Websea 子账户。": "Click Add to create a Gate and Websea sub-account pair together.",
+        "子账户不能重复": "Sub accounts cannot be duplicated",
         "交易对规则决定 Gate 仓位如何换算成 Websea 目标仓位。": "Symbol rules decide how Gate positions are converted into Websea target positions.",
         "自动新增交易对": "Auto Add Symbol",
         "只填写 Gate source_symbol，系统会自动推导 Websea 交易对并补齐 ratio、合约面值和基础风控参数。": "Enter only the Gate source_symbol; the system infers Websea symbol, ratio, contract multipliers, and basic risk parameters.",
@@ -474,7 +495,7 @@ def toggle_theme():
     st.session_state["theme"] = "light" if current_theme() == "dark" else "dark"
 
 
-def app_href(page_slug=None, lang=None, sidebar=None, theme=None, unit=None):
+def app_href(page_slug=None, lang=None, sidebar=None, theme=None, unit=None, live=None):
     params = {}
     current_page = current_page_from_query()
     current_slug = next((slug for page, slug in NAV_ITEMS if page == current_page), NAV_ITEMS[0][1])
@@ -484,6 +505,8 @@ def app_href(page_slug=None, lang=None, sidebar=None, theme=None, unit=None):
     params["theme"] = theme or current_theme()
     if unit:
         params["unit"] = unit
+    if live:
+        params["live"] = live
     return f"?{urllib.parse.urlencode(params)}"
 
 
@@ -495,6 +518,10 @@ def page_href(page, unit=None):
 def requested_unit_name():
     value = st.query_params.get("unit", "")
     return str(value).strip()
+
+
+def live_refresh_requested():
+    return bool(str(st.query_params.get("live", "")).strip())
 
 
 class DashboardRuntime:
@@ -1448,6 +1475,72 @@ def inject_theme():
           text-decoration: none !important;
         }
 
+        .live-account-toolbar {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: var(--space-12);
+          margin-bottom: var(--space-12);
+        }
+
+        .live-account-subtitle {
+          color: var(--color-text);
+          font-size: .92rem;
+          line-height: 1.3;
+          font-weight: 740;
+          margin: var(--space-16) 0 var(--space-8);
+        }
+
+        .live-account-panel .ws-table-wrap {
+          margin: 0;
+          box-shadow: none;
+          border-radius: var(--radius-md);
+        }
+
+        .follower-config-intro {
+          color: var(--color-text);
+          font-size: .96rem;
+          line-height: 1.35;
+          font-weight: 740;
+          margin: var(--space-24) 0 var(--space-8);
+        }
+
+        .follower-column-title {
+          color: var(--color-text);
+          font-size: 1rem;
+          line-height: 1.3;
+          font-weight: 760;
+          margin: 0 0 var(--space-4);
+        }
+
+        .follower-column-copy {
+          color: var(--color-text-secondary);
+          font-size: .78rem;
+          line-height: 1.45;
+          margin: 0 0 var(--space-12);
+        }
+
+        .follower-pair-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-12);
+          margin-bottom: var(--space-12);
+        }
+
+        .follower-pair-title {
+          color: var(--color-text);
+          font-size: .92rem;
+          line-height: 1.35;
+          font-weight: 740;
+        }
+
+        .follower-pair-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-16);
+        }
+
         div[data-testid="stExpander"] {
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);
@@ -1601,6 +1694,9 @@ def inject_theme():
             margin: var(--space-8) 0;
           }
           .account-fields {
+            grid-template-columns: 1fr;
+          }
+          .follower-pair-grid {
             grid-template-columns: 1fr;
           }
           .unit-empty-action {
@@ -2258,6 +2354,14 @@ def select_index(options, value):
     return 0
 
 
+def select_options_with_empty(options, current_value=""):
+    normalized = [""] + [item for item in options if item]
+    current_value = str(current_value or "").strip()
+    if current_value and current_value not in normalized:
+        normalized.append(current_value)
+    return normalized
+
+
 def validate_decimal_text(value, field_name):
     try:
         dec = Decimal(str(value))
@@ -2453,6 +2557,130 @@ def normalize_symbol_rows(rows):
         normalized.append(item)
     if not normalized:
         raise ValueError("至少需要保留一个交易对")
+    return normalized
+
+
+def follower_side_fields(unit_name, leg_name, idx, title, account_options, existing):
+    st.markdown(f'<div class="follower-column-title">{esc(tr(title))}</div>', unsafe_allow_html=True)
+    current_account = str(existing.get("account") or "").strip()
+    options = select_options_with_empty(account_options, current_account)
+    account = st.selectbox(
+        tr("选择子账户"),
+        options,
+        index=select_index(options, current_account),
+        format_func=lambda value: tr("未选择") if value == "" else value,
+        key=f"{unit_name}_{leg_name}_follower_{idx}_account",
+    )
+    enabled = st.checkbox(
+        tr("是否启用"),
+        value=bool(existing.get("enabled", False)),
+        key=f"{unit_name}_{leg_name}_follower_{idx}_enabled",
+    )
+    ratio = st.text_input(
+        tr("跟随比例"),
+        value=str(existing.get("ratio", "1")),
+        key=f"{unit_name}_{leg_name}_follower_{idx}_ratio",
+    )
+    return {
+        "account": account,
+        "enabled": enabled,
+        "ratio": ratio,
+    }
+
+
+def render_follower_pair_editor(
+        unit_name,
+        gate_accounts,
+        websea_accounts,
+        source_followers,
+        hedge_followers,
+        source_master="",
+        hedge_master=""):
+    session_key = f"{unit_name}_follower_pair_count"
+    deleted_key = f"{unit_name}_deleted_follower_pair_indexes"
+    existing_count = max(len(source_followers), len(hedge_followers))
+    if session_key not in st.session_state:
+        st.session_state[session_key] = existing_count
+    row_count = max(int(st.session_state.get(session_key, existing_count)), existing_count)
+    deleted_indexes = set(st.session_state.get(deleted_key, []))
+
+    st.markdown(f'<div class="follower-config-intro">{esc(tr("子账户配置"))}</div>', unsafe_allow_html=True)
+    st.caption(tr("点击新增后会同时添加一组 Gate 与 Websea 子账户。"))
+
+    if row_count == 0:
+        st.caption(tr("暂无子账户对"))
+
+    edited_source_rows = []
+    edited_hedge_rows = []
+    visible_idx = 0
+    for idx in range(row_count):
+        if idx in deleted_indexes:
+            continue
+
+        visible_idx += 1
+        source_existing = source_followers[idx] if idx < len(source_followers) else {}
+        hedge_existing = hedge_followers[idx] if idx < len(hedge_followers) else {}
+        with st.container(border=True):
+            st.markdown(
+                (
+                    '<div class="follower-pair-head">'
+                    f'<div class="follower-pair-title">{esc(tr("子账号对"))} #{visible_idx}</div>'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
+            )
+            col1, col2 = st.columns(2)
+            with col1:
+                source_row = follower_side_fields(
+                    unit_name,
+                    "source",
+                    idx,
+                    "Gate 子账户",
+                    gate_accounts,
+                    source_existing,
+                )
+            with col2:
+                hedge_row = follower_side_fields(
+                    unit_name,
+                    "hedge",
+                    idx,
+                    "Websea 子账户",
+                    websea_accounts,
+                    hedge_existing,
+                )
+            if st.button(tr("删除子账户对"), key=f"{unit_name}_follower_pair_{idx}_delete"):
+                deleted_indexes.add(idx)
+                st.session_state[deleted_key] = sorted(deleted_indexes)
+                st.rerun()
+
+        edited_source_rows.append(source_row)
+        edited_hedge_rows.append(hedge_row)
+
+    if st.button(tr("新增子账户对"), key=f"{unit_name}_add_follower_pair"):
+        st.session_state[session_key] = row_count + 1
+        st.rerun()
+    st.divider()
+
+    return edited_source_rows, edited_hedge_rows
+
+
+def normalize_follower_config(rows, field_name):
+    normalized = []
+    seen = set()
+    for row in rows:
+        account = str(row.get("account") or "").strip()
+        if not account:
+            continue
+        if account in seen:
+            raise ValueError(f"{tr(field_name)}：{tr('子账户不能重复')}")
+        seen.add(account)
+        ratio_value = str(row.get("ratio", "1") or "1").strip()
+        validate_decimal_text(ratio_value, tr("跟随比例"))
+        normalized.append({
+            "account": account,
+            "ratio": ratio_value,
+            "enabled": bool(row.get("enabled", False)),
+        })
     return normalized
 
 
@@ -2898,7 +3126,19 @@ def render_strategy_unit_cards(strategy_data, accounts_data):
     accounts = accounts_data.get("accounts", {})
     units = strategy_data.get("units", [])
     if not units:
-        render_empty("还没有策略单元", "请先在策略页面新增策略单元，再配置 Gate 与 Websea 的 master/sub 关系。")
+        strategy_href = esc(page_href("策略配置"))
+        st.markdown(
+            (
+                '<div class="unit-empty-action">'
+                '<div>'
+                f'<div class="unit-empty-title">{esc(tr("还没有策略单元"))}</div>'
+                f'<div class="unit-empty-copy">{esc(tr("请先在策略页面新增策略单元，再配置 Gate 与 Websea 的 master/sub 关系。"))}</div>'
+                '</div>'
+                f'<a class="config-link-button" href="{strategy_href}" target="_self">{esc(tr("新增"))}</a>'
+                '</div>'
+            ),
+            unsafe_allow_html=True,
+        )
         return
 
     st.markdown('<div class="strategy-unit-stack">', unsafe_allow_html=True)
@@ -3064,71 +3304,89 @@ def main():
         render_section("策略单元", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示，快速确认每个策略单元的账号、比例和启用状态。")
         render_strategy_unit_cards(strategy_data, accounts_data)
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
-        live_account_requested = st.button(tr("刷新实时账户信息"))
+        refresh_href = esc(app_href(live=datetime.now().strftime("%Y%m%d%H%M%S%f")))
+        live_account_requested = live_refresh_requested()
         if not live_account_requested:
-            render_empty(
-                "尚未读取实时账户信息",
-                "点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。",
+            st.markdown(
+                (
+                    '<div class="unit-empty-action">'
+                    '<div>'
+                    f'<div class="unit-empty-title">{esc(tr("尚未读取实时账户信息"))}</div>'
+                    f'<div class="unit-empty-copy">{esc(tr("点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。"))}</div>'
+                    '</div>'
+                    f'<a class="config-link-button" href="{refresh_href}" target="_self">{esc(tr("刷新"))}</a>'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
             )
         else:
-            runtime_rows = []
-            position_rows = []
-            amount_index = build_contract_amount_index(strategy_data)
-            accounts = accounts_data.get("accounts", {})
-            if accounts:
-                progress = st.progress(0)
-                for idx, (account_name, acc_cfg) in enumerate(accounts.items()):
-                    if not acc_cfg.get("enabled", True):
-                        runtime_rows.append({"account": account_name, "exchange": acc_cfg.get("exchange"),
-                                             "balance": "DISABLED", "available": "", "unrealized_pnl": ""})
-                        continue
-                    try:
-                        result = asyncio.run(fetch_account_runtime(account_name, acc_cfg, global_data))
-                        bal = result.get("balance") or {}
-                        runtime_rows.append({
-                            "account": account_name, "exchange": result["exchange"],
-                            "balance": str(bal.get("balance", "0")),
-                            "available": str(bal.get("available", "0")),
-                            "unrealized_pnl": str(bal.get("unrealized_pnl", "0"))
-                        })
-                        for pos in result.get("positions", []):
-                            row = {"account": account_name, "exchange": result["exchange"], **pos}
-                            position_rows.append(enrich_position_row(row, amount_index))
-                    except Exception as e:
-                        runtime_rows.append({"account": account_name, "exchange": acc_cfg.get("exchange"),
-                                             "balance": "ERROR", "available": "", "unrealized_pnl": str(e)})
-                    progress.progress((idx + 1) / max(len(accounts), 1))
-            render_section("实时余额")
-            render_table(runtime_rows)
-            render_section("实时持仓")
-            if position_rows:
-                position_df = pd.DataFrame(position_rows)
-                preferred_cols = [
-                    "account", "exchange", "symbol", "side",
-                    "raw_size", "actual_amount", "amount_unit",
-                    "entry_price", "liq_price", "pnl",
-                ]
-                visible_cols = [col for col in preferred_cols if col in position_df.columns]
-                display_df = position_df[visible_cols].rename(columns={
-                    "account": "账号",
-                    "exchange": "交易所",
-                    "symbol": "合约",
-                    "side": "方向",
-                    "raw_size": "持仓size",
-                    "actual_amount": "实际数量",
-                    "amount_unit": "币种",
-                    "entry_price": "开仓均价",
-                    "liq_price": "强平价",
-                    "pnl": "未实现盈亏",
-                })
-                render_table(display_df)
-                charts = build_position_charts(position_rows)
-                if charts:
-                    pos_fig, pnl_fig = charts
-                    st.plotly_chart(pos_fig, use_container_width=True)
-                    st.plotly_chart(pnl_fig, use_container_width=True)
-            else:
-                st.info(tr("当前无持仓"))
+            with st.container(border=True):
+                st.markdown(
+                    (
+                        '<div class="live-account-toolbar">'
+                        f'<a class="config-link-button" href="{refresh_href}" target="_self">{esc(tr("刷新"))}</a>'
+                        '</div>'
+                    ),
+                    unsafe_allow_html=True,
+                )
+                runtime_rows = []
+                position_rows = []
+                amount_index = build_contract_amount_index(strategy_data)
+                accounts = accounts_data.get("accounts", {})
+                if accounts:
+                    progress = st.progress(0)
+                    for idx, (account_name, acc_cfg) in enumerate(accounts.items()):
+                        if not acc_cfg.get("enabled", True):
+                            runtime_rows.append({"account": account_name, "exchange": acc_cfg.get("exchange"),
+                                                 "balance": "DISABLED", "available": "", "unrealized_pnl": ""})
+                            continue
+                        try:
+                            result = asyncio.run(fetch_account_runtime(account_name, acc_cfg, global_data))
+                            bal = result.get("balance") or {}
+                            runtime_rows.append({
+                                "account": account_name, "exchange": result["exchange"],
+                                "balance": str(bal.get("balance", "0")),
+                                "available": str(bal.get("available", "0")),
+                                "unrealized_pnl": str(bal.get("unrealized_pnl", "0"))
+                            })
+                            for pos in result.get("positions", []):
+                                row = {"account": account_name, "exchange": result["exchange"], **pos}
+                                position_rows.append(enrich_position_row(row, amount_index))
+                        except Exception as e:
+                            runtime_rows.append({"account": account_name, "exchange": acc_cfg.get("exchange"),
+                                                 "balance": "ERROR", "available": "", "unrealized_pnl": str(e)})
+                        progress.progress((idx + 1) / max(len(accounts), 1))
+                st.markdown(f'<div class="live-account-subtitle">{esc(tr("实时余额"))}</div>', unsafe_allow_html=True)
+                render_table(runtime_rows)
+                st.markdown(f'<div class="live-account-subtitle">{esc(tr("实时持仓"))}</div>', unsafe_allow_html=True)
+                if position_rows:
+                    position_df = pd.DataFrame(position_rows)
+                    preferred_cols = [
+                        "account", "exchange", "symbol", "side",
+                        "raw_size", "actual_amount", "amount_unit",
+                        "entry_price", "liq_price", "pnl",
+                    ]
+                    visible_cols = [col for col in preferred_cols if col in position_df.columns]
+                    display_df = position_df[visible_cols].rename(columns={
+                        "account": "账号",
+                        "exchange": "交易所",
+                        "symbol": "合约",
+                        "side": "方向",
+                        "raw_size": "持仓size",
+                        "actual_amount": "实际数量",
+                        "amount_unit": "币种",
+                        "entry_price": "开仓均价",
+                        "liq_price": "强平价",
+                        "pnl": "未实现盈亏",
+                    })
+                    render_table(display_df)
+                    charts = build_position_charts(position_rows)
+                    if charts:
+                        pos_fig, pnl_fig = charts
+                        st.plotly_chart(pos_fig, use_container_width=True)
+                        st.plotly_chart(pnl_fig, use_container_width=True)
+                else:
+                    st.info(tr("当前无持仓"))
 
         render_section("系统状态", "后端同步引擎需单独运行。这里列出策略单元涉及的主账号和子账号配置检查；未启用的子账号会标记为 SKIP，不计为阻断。")
         checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
@@ -3257,11 +3515,12 @@ def main():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown("#### Source / Gate")
-                    source_accounts = gate_accounts or [source.get("account", "")]
+                    source_accounts = select_options_with_empty(gate_accounts, source.get("account"))
                     source_account = st.selectbox(
                         tr("Source 主账号"),
                         source_accounts,
                         index=select_index(source_accounts, source.get("account")),
+                        format_func=lambda value: tr("未选择") if value == "" else value,
                         key=f"{unit.get('name')}_source_account",
                     )
                     source_leverage = st.number_input(
@@ -3280,11 +3539,12 @@ def main():
                     source_settle = st.text_input("Source settle", value=source.get("settle", "usdt"), key=f"{unit.get('name')}_source_settle")
                 with col2:
                     st.markdown("#### Hedge / Websea")
-                    hedge_accounts = websea_accounts or [hedge.get("account", "")]
+                    hedge_accounts = select_options_with_empty(websea_accounts, hedge.get("account"))
                     hedge_account = st.selectbox(
                         tr("Hedge 主账号"),
                         hedge_accounts,
                         index=select_index(hedge_accounts, hedge.get("account")),
+                        format_func=lambda value: tr("未选择") if value == "" else value,
                         key=f"{unit.get('name')}_hedge_account",
                     )
                     hedge_mode = st.selectbox(
@@ -3308,24 +3568,20 @@ def main():
                         key=f"{unit.get('name')}_hedge_margin",
                     )
 
-                follower_rows = []
-                for leg_name in ("source", "hedge"):
-                    for item in unit.get(leg_name, {}).get("followers", []):
-                        follower_rows.append({
-                            "leg": leg_name,
-                            "account": item.get("account", ""),
-                            "enabled": bool(item.get("enabled", False)),
-                            "ratio": str(item.get("ratio", "1")),
-                        })
-                edited_followers = st.data_editor(
-                    pd.DataFrame(follower_rows),
-                    num_rows="dynamic",
-                    width="stretch",
-                    key=f"{unit.get('name')}_followers",
+                edited_source_followers, edited_hedge_followers = render_follower_pair_editor(
+                    unit_name=unit_name,
+                    gate_accounts=gate_accounts,
+                    websea_accounts=websea_accounts,
+                    source_followers=source.get("followers", []),
+                    hedge_followers=hedge.get("followers", []),
+                    source_master=source_account,
+                    hedge_master=hedge_account,
                 )
 
-                col1, col2 = st.columns(2)
-                with col1:
+                delete_confirm_key = f"{unit.get('name')}_delete_confirm"
+                confirm_delete_state = bool(st.session_state.get(delete_confirm_key, False))
+                save_col, delete_col = st.columns([1, 1])
+                with save_col:
                     if st.button(tr("保存策略单元"), key=f"{unit.get('name')}_save_unit"):
                         try:
                             validate_decimal_text(hedge_ratio, tr("Hedge 比例"))
@@ -3346,37 +3602,23 @@ def main():
                                 "margin_mode": hedge_margin_mode,
                             })
 
-                            source["followers"] = []
-                            hedge["followers"] = []
-                            for row in edited_followers.to_dict("records"):
-                                leg_name = str(row.get("leg", "")).strip()
-                                account = str(row.get("account", "")).strip()
-                                if not leg_name or not account:
-                                    continue
-                                if leg_name not in {"source", "hedge"}:
-                                    raise ValueError("followers 的 leg 只能是 source 或 hedge")
-                                ratio_value = str(row.get("ratio", "1"))
-                                validate_decimal_text(ratio_value, "follower ratio")
-                                unit[leg_name].setdefault("followers", []).append({
-                                    "account": account,
-                                    "ratio": ratio_value,
-                                    "enabled": bool(row.get("enabled", False)),
-                                })
+                            source["followers"] = normalize_follower_config(edited_source_followers, "Gate 子账户")
+                            hedge["followers"] = normalize_follower_config(edited_hedge_followers, "Websea 子账户")
 
                             save_json(STRATEGY_PATH, strategy_data)
                             st.success(tr("策略单元已保存"))
                             st.rerun()
                         except Exception as exc:
                             st.error(str(exc))
-                with col2:
-                    confirm_delete = st.checkbox(tr("确认删除策略单元"), key=f"{unit.get('name')}_delete_confirm")
-                    if confirm_delete:
-                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
-                    if st.button(tr("删除策略单元"), key=f"{unit.get('name')}_delete_unit", disabled=not confirm_delete):
+                with delete_col:
+                    if st.button(tr("删除策略单元"), key=f"{unit.get('name')}_delete_unit", disabled=not confirm_delete_state):
                         strategy_data["units"] = [u for u in strategy_data.get("units", []) if u.get("name") != unit.get("name")]
                         save_json(STRATEGY_PATH, strategy_data)
                         st.success(tr("已删除策略单元"))
                         st.rerun()
+                    confirm_delete = st.checkbox(tr("确认删除策略单元"), key=delete_confirm_key)
+                    if confirm_delete:
+                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
 
         if target_unit_name:
             target_unit_json = json.dumps(target_unit_name, ensure_ascii=False)

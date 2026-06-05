@@ -1,10 +1,10 @@
 {
   "units": [
     {
-      "name": "T1",
+      "name": "unit_1",
       "enabled": true,
       "source": {
-        "account": "gate_m-1",
+        "account": "gata-m-4",
         "exchange": "gate",
         "settle": "usdt",
         "leverage": 10,
@@ -12,21 +12,21 @@
         "followers": [
           {
             "account": "gate-s-1",
-            "ratio": "0.8",
+            "ratio": "1",
             "enabled": false
           },
           {
-            "account": "None",
+            "account": "gate-s-3",
             "ratio": "1",
-            "enabled": true
+            "enabled": false
           }
         ]
       },
       "hedge": {
         "account": "websea-m-1",
         "exchange": "websea",
-        "mode": "opposite",
-        "ratio": "0.5",
+        "mode": "same",
+        "ratio": "1",
         "leverage": 10,
         "margin_mode": "cross",
         "followers": [
@@ -37,7 +37,7 @@
           },
           {
             "account": "websea-s-2",
-            "ratio": "3",
+            "ratio": "1",
             "enabled": false
           }
         ]
@@ -45,7 +45,7 @@
       "symbols": []
     },
     {
-      "name": "T2",
+      "name": "T3",
       "enabled": true,
       "source": {
         "account": "",
