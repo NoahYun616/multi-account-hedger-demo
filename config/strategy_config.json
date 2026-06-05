@@ -11,12 +11,12 @@
         "margin_mode": "isolated",
         "followers": [
           {
-            "account": "gate-s-1",
+            "account": "gate-s-3",
             "ratio": "1",
             "enabled": false
           },
           {
-            "account": "gate-s-3",
+            "account": "gate-s-1",
             "ratio": "1",
             "enabled": false
           }
@@ -31,12 +31,12 @@
         "margin_mode": "cross",
         "followers": [
           {
-            "account": "websea-s-1",
+            "account": "websea-s-2",
             "ratio": "1",
             "enabled": false
           },
           {
-            "account": "websea-s-2",
+            "account": "websea-s-1",
             "ratio": "1",
             "enabled": false
           }

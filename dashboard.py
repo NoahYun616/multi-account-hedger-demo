@@ -1520,21 +1520,6 @@ def inject_theme():
           margin: 0 0 var(--space-12);
         }
 
-        .follower-pair-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: var(--space-12);
-          margin-bottom: var(--space-12);
-        }
-
-        .follower-pair-title {
-          color: var(--color-text);
-          font-size: .92rem;
-          line-height: 1.35;
-          font-weight: 740;
-        }
-
         .follower-pair-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1550,6 +1535,17 @@ def inject_theme():
 
         div[data-testid="stExpander"] details summary {
           font-weight: 700;
+        }
+
+        div[data-testid="stExpander"] details[open] > summary .follower-pair-summary-accounts {
+          display: none;
+        }
+
+        div[data-testid="stExpander"] details > summary .follower-pair-summary-accounts {
+          display: inline-block;
+          margin-left: var(--space-16);
+          color: var(--color-text-secondary);
+          font-weight: 650;
         }
 
         div[data-testid="stDataFrame"],
@@ -2588,6 +2584,57 @@ def follower_side_fields(unit_name, leg_name, idx, title, account_options, exist
     }
 
 
+def follower_pair_label(index, source_existing, hedge_existing):
+    return f"{tr('子账号对')} #{index}"
+
+
+def follower_pair_accounts_label(source_existing, hedge_existing):
+    source_account = str(source_existing.get("account") or tr("未选择")).strip()
+    hedge_account = str(hedge_existing.get("account") or tr("未选择")).strip()
+    return f"{source_account} / {hedge_account}"
+
+
+def inject_follower_pair_summary_labels(labels):
+    if not labels:
+        return
+    payload = json.dumps(labels, ensure_ascii=False)
+    title_prefix = json.dumps(f"{tr('子账号对')} #", ensure_ascii=False)
+    components.html(
+        f"""
+        <script>
+        (() => {{
+          const labels = {payload};
+          const titlePrefix = {title_prefix};
+          const parentDoc = window.parent.document;
+          const applyLabels = () => {{
+            const summaries = Array.from(parentDoc.querySelectorAll('details summary'))
+              .filter((summary) => summary.textContent.includes(titlePrefix));
+            labels.forEach((item, index) => {{
+              const summary = summaries[index];
+              if (!summary) return;
+              const markdown = summary.querySelector('[data-testid="stMarkdownContainer"] p') || summary;
+              let accountNode = summary.querySelector('.follower-pair-summary-accounts');
+              if (!accountNode) {{
+                accountNode = parentDoc.createElement('span');
+                accountNode.className = 'follower-pair-summary-accounts';
+                markdown.appendChild(accountNode);
+              }}
+              accountNode.textContent = item.accounts;
+            }});
+          }};
+          let attempts = 0;
+          const timer = setInterval(() => {{
+            applyLabels();
+            attempts += 1;
+            if (attempts > 20) clearInterval(timer);
+          }}, 100);
+        }})();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def render_follower_pair_editor(
         unit_name,
         gate_accounts,
@@ -2598,11 +2645,13 @@ def render_follower_pair_editor(
         hedge_master=""):
     session_key = f"{unit_name}_follower_pair_count"
     deleted_key = f"{unit_name}_deleted_follower_pair_indexes"
+    expanded_key = f"{unit_name}_expanded_follower_pair_index"
     existing_count = max(len(source_followers), len(hedge_followers))
     if session_key not in st.session_state:
         st.session_state[session_key] = existing_count
     row_count = max(int(st.session_state.get(session_key, existing_count)), existing_count)
     deleted_indexes = set(st.session_state.get(deleted_key, []))
+    expanded_pair_index = st.session_state.get(expanded_key)
 
     st.markdown(f'<div class="follower-config-intro">{esc(tr("子账户配置"))}</div>', unsafe_allow_html=True)
     st.caption(tr("点击新增后会同时添加一组 Gate 与 Websea 子账户。"))
@@ -2612,6 +2661,7 @@ def render_follower_pair_editor(
 
     edited_source_rows = []
     edited_hedge_rows = []
+    summary_labels = []
     visible_idx = 0
     for idx in range(row_count):
         if idx in deleted_indexes:
@@ -2620,15 +2670,10 @@ def render_follower_pair_editor(
         visible_idx += 1
         source_existing = source_followers[idx] if idx < len(source_followers) else {}
         hedge_existing = hedge_followers[idx] if idx < len(hedge_followers) else {}
-        with st.container(border=True):
-            st.markdown(
-                (
-                    '<div class="follower-pair-head">'
-                    f'<div class="follower-pair-title">{esc(tr("子账号对"))} #{visible_idx}</div>'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
+        summary_labels.append({"accounts": follower_pair_accounts_label(source_existing, hedge_existing)})
+        with st.expander(
+                follower_pair_label(visible_idx, source_existing, hedge_existing),
+                expanded=(idx == expanded_pair_index)):
             col1, col2 = st.columns(2)
             with col1:
                 source_row = follower_side_fields(
@@ -2651,6 +2696,8 @@ def render_follower_pair_editor(
             if st.button(tr("删除子账户对"), key=f"{unit_name}_follower_pair_{idx}_delete"):
                 deleted_indexes.add(idx)
                 st.session_state[deleted_key] = sorted(deleted_indexes)
+                if st.session_state.get(expanded_key) == idx:
+                    st.session_state.pop(expanded_key, None)
                 st.rerun()
 
         edited_source_rows.append(source_row)
@@ -2658,8 +2705,10 @@ def render_follower_pair_editor(
 
     if st.button(tr("新增子账户对"), key=f"{unit_name}_add_follower_pair"):
         st.session_state[session_key] = row_count + 1
+        st.session_state[expanded_key] = row_count
         st.rerun()
     st.divider()
+    inject_follower_pair_summary_labels(summary_labels)
 
     return edited_source_rows, edited_hedge_rows
 
