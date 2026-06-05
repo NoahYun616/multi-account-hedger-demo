@@ -9,6 +9,7 @@ from datetime import datetime
 from decimal import Decimal
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.graph_objects as go
 
 from clients.gate_rest import GateRestClient
@@ -75,7 +76,7 @@ I18N = {
         "交易对": "Symbols",
         "原始配置": "Raw Config",
         "使用说明": "Guide",
-        "查看运行状态、配置检查和账号配对。": "View runtime status, config checks, and account pairs.",
+        "查看运行状态、配置检查和策略单元。": "View runtime status, config checks, and strategy units.",
         "维护交易账号、启用状态、接口地址和密钥。": "Manage exchange accounts, enabled state, API endpoints, and credentials.",
         "新增 Gate 或 Websea 账号，并挂载到指定策略单元。": "Add a Gate or Websea account and attach it to a strategy unit.",
         "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。": "Configure master accounts, hedge direction, leverage, margin mode, and followers.",
@@ -166,6 +167,27 @@ I18N = {
         "说明内容保存在 config/usage_guide.md，可在页面中直接编辑并保存。": "Guide content is stored in config/usage_guide.md and can be edited directly on this page.",
         "账号配对": "Account Pairs",
         "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。": "Show Gate and Websea accounts side by side by master/sub relationship.",
+        "按 Gate 与 Websea 的 master/sub 关系横向对齐展示，快速确认每个策略单元的账号、比例和启用状态。": "Show Gate and Websea master/sub relationships side by side to quickly confirm accounts, ratios, and enabled state for each strategy unit.",
+        "策略单元说明": "Strategy Unit Notes",
+        "启用中": "Enabled",
+        "未启用": "Disabled",
+        "未配置": "Not configured",
+        "账号": "Account",
+        "比例": "Ratio",
+        "基准比例": "Base ratio",
+        "对冲比例": "Hedge ratio",
+        "跟随比例": "Follow ratio",
+        "杠杆": "Leverage",
+        "保证金模式": "Margin mode",
+        "Hedge 模式": "Hedge mode",
+        "关系": "Pair",
+        "交易对数量": "Symbols",
+        "交易对映射": "Symbol mappings",
+        "请在交易对页面新增映射规则。": "Add mapping rules on the Symbols page.",
+        "前往配置": "Configure",
+        "子账号对": "Sub pairs",
+        "未配置 Gate 账号": "Gate account not configured",
+        "未配置 Websea 账号": "Websea account not configured",
         "跟随开关": "Follow Switches",
         "快速调整每对子账号的启用状态和跟随比例。": "Quickly adjust each sub-account pair's enabled state and follow ratio.",
         "当前策略单元还没有子账号配对": "This strategy unit has no sub-account pairs yet",
@@ -189,6 +211,7 @@ I18N = {
         "未检测": "Unknown",
         "系统状态": "System Status",
         "后端同步引擎需单独运行。这里集中查看配置检查和日志状态。": "The backend sync engine runs separately. Config checks and log status are grouped here.",
+        "后端同步引擎需单独运行。这里列出策略单元涉及的主账号和子账号配置检查；未启用的子账号会标记为 SKIP，不计为阻断。": "The backend sync engine runs separately. This lists config checks for master and sub accounts used by strategy units. Disabled sub accounts are marked SKIP and do not count as blockers.",
         "用于判断同步引擎是否已经产生运行日志或状态文件。": "Use this to see whether the sync engine has produced log or state files.",
         "暂无数据": "No data",
         "当前没有可展示的数据。请检查配置或稍后刷新。": "No data is available. Check the configuration or refresh later.",
@@ -363,7 +386,7 @@ source 到 hedge 的同步张数比例。
 """
 
 PAGE_META = {
-    "分组总览": ("总览", "查看运行状态、配置检查和账号配对。"),
+    "分组总览": ("总览", "查看运行状态、配置检查和策略单元。"),
     "账号管理": ("账号", "维护交易账号、启用状态、接口地址和密钥。"),
     "新增账号": ("新增账号", "新增 Gate 或 Websea 账号，并挂载到指定策略单元。"),
     "策略配置": ("策略", "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。"),
@@ -451,7 +474,7 @@ def toggle_theme():
     st.session_state["theme"] = "light" if current_theme() == "dark" else "dark"
 
 
-def app_href(page_slug=None, lang=None, sidebar=None, theme=None):
+def app_href(page_slug=None, lang=None, sidebar=None, theme=None, unit=None):
     params = {}
     current_page = current_page_from_query()
     current_slug = next((slug for page, slug in NAV_ITEMS if page == current_page), NAV_ITEMS[0][1])
@@ -459,7 +482,19 @@ def app_href(page_slug=None, lang=None, sidebar=None, theme=None):
     params["lang"] = lang or current_language()
     params["sidebar"] = sidebar or current_sidebar_mode()
     params["theme"] = theme or current_theme()
+    if unit:
+        params["unit"] = unit
     return f"?{urllib.parse.urlencode(params)}"
+
+
+def page_href(page, unit=None):
+    slug = next((item_slug for item_page, item_slug in NAV_ITEMS if item_page == page), None)
+    return app_href(page_slug=slug or page, unit=unit)
+
+
+def requested_unit_name():
+    value = st.query_params.get("unit", "")
+    return str(value).strip()
 
 
 class DashboardRuntime:
@@ -1112,6 +1147,307 @@ def inject_theme():
           margin-top: .25rem;
         }
 
+        .strategy-unit-stack {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-16);
+          margin: var(--space-12) 0 var(--space-16);
+        }
+
+        [data-unit-anchor] {
+          scroll-margin-top: var(--space-24);
+        }
+
+        .strategy-unit-card {
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          background: var(--color-bg-container);
+          box-shadow: var(--shadow-card);
+          overflow: hidden;
+          margin-bottom: var(--space-16);
+        }
+
+        details.strategy-unit-card > summary {
+          list-style: none;
+          cursor: pointer;
+        }
+
+        details.strategy-unit-card > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        details.strategy-unit-card > summary:focus-visible {
+          outline: 2px solid rgba(20, 184, 166, .42);
+          outline-offset: -2px;
+        }
+
+        details.strategy-unit-card > summary:hover .strategy-unit-head {
+          background: linear-gradient(180deg, rgba(20, 184, 166, .12), rgba(255, 255, 255, 0));
+        }
+
+        .strategy-unit-card.disabled {
+          opacity: .76;
+        }
+
+        .strategy-unit-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: var(--space-16);
+          padding: var(--space-16);
+          border-bottom: 1px solid var(--color-border);
+          background: linear-gradient(180deg, rgba(20, 184, 166, .08), rgba(255, 255, 255, 0));
+        }
+
+        .strategy-unit-title {
+          color: var(--color-text);
+          font-size: 1rem;
+          line-height: 1.3;
+          font-weight: 760;
+          margin-bottom: var(--space-4);
+        }
+
+        .strategy-unit-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: var(--space-8);
+        }
+
+        .strategy-unit-chevron {
+          width: 28px;
+          height: 28px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          color: var(--color-text-secondary);
+          background: var(--color-bg-container);
+          font-size: .84rem;
+          font-weight: 760;
+          transition: transform .16s ease, color .16s ease, border-color .16s ease;
+          flex: 0 0 auto;
+        }
+
+        details.strategy-unit-card[open] .strategy-unit-chevron {
+          transform: rotate(90deg);
+          color: var(--color-primary-text);
+          border-color: #CCFBF1;
+        }
+
+        .mini-pill {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: .18rem .52rem;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--color-border);
+          background: var(--color-bg-container);
+          color: var(--color-text-secondary);
+          font-size: .72rem;
+          line-height: 1.25;
+          font-weight: 650;
+          white-space: nowrap;
+        }
+
+        .mini-pill.ok {
+          color: var(--color-success);
+          background: var(--color-success-bg);
+          border-color: #BBF7D0;
+        }
+
+        .mini-pill.muted {
+          color: var(--color-text-tertiary);
+          background: var(--color-bg-subtle);
+        }
+
+        .strategy-pair-list {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-16);
+          padding: var(--space-16);
+        }
+
+        .strategy-pair {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          align-items: stretch;
+          gap: var(--space-16);
+        }
+
+        .pair-connector {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 120px;
+          color: var(--color-text-tertiary);
+          font-size: .78rem;
+          font-weight: 700;
+          text-align: center;
+        }
+
+        .pair-connector-line {
+          width: 100%;
+          height: 1px;
+          margin: var(--space-8) 0;
+          background: linear-gradient(90deg, transparent, var(--color-border-strong), transparent);
+        }
+
+        .account-card {
+          min-height: 104px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          background: var(--color-bg-subtle);
+          padding: var(--space-12);
+        }
+
+        a.account-card-link {
+          display: block;
+          color: inherit !important;
+          text-decoration: none !important;
+          border-radius: var(--radius-md);
+        }
+
+        a.account-card-link:hover .account-card {
+          border-color: var(--color-primary);
+          box-shadow: 0 8px 24px rgba(20, 184, 166, .12);
+        }
+
+        a.account-card-link:focus-visible {
+          outline: 2px solid rgba(20, 184, 166, .42);
+          outline-offset: 3px;
+        }
+
+        .account-card.gate {
+          border-color: rgba(20, 184, 166, .34);
+          background: linear-gradient(180deg, rgba(20, 184, 166, .12), rgba(20, 184, 166, .05));
+        }
+
+        .account-card.websea {
+          border-color: rgba(37, 99, 235, .28);
+          background: linear-gradient(180deg, rgba(37, 99, 235, .10), rgba(37, 99, 235, .04));
+        }
+
+        .account-card.missing {
+          border-style: dashed;
+          background: var(--color-bg-container);
+        }
+
+        .account-card-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-8);
+          margin-bottom: var(--space-12);
+        }
+
+        .exchange-name {
+          color: var(--color-text);
+          font-size: .88rem;
+          font-weight: 780;
+          letter-spacing: 0;
+        }
+
+        .account-fields {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: var(--space-16);
+          row-gap: var(--space-8);
+        }
+
+        .account-field {
+          min-width: 0;
+        }
+
+        .field-label {
+          color: var(--color-text-secondary);
+          font-size: .72rem;
+          line-height: 1.2;
+          margin-bottom: 2px;
+        }
+
+        .field-value {
+          color: var(--color-text);
+          font-size: .9rem;
+          line-height: 1.35;
+          font-weight: 680;
+          overflow-wrap: anywhere;
+        }
+
+        .field-value.muted {
+          color: var(--color-text-tertiary);
+          font-weight: 620;
+        }
+
+        .unit-symbol-section {
+          border-top: 1px solid var(--color-border);
+          padding: var(--space-16);
+          background: var(--color-bg-container);
+        }
+
+        .unit-subsection-title {
+          color: var(--color-text);
+          font-size: .92rem;
+          line-height: 1.3;
+          font-weight: 740;
+          margin-bottom: var(--space-8);
+        }
+
+        .unit-symbol-section .ws-table-wrap {
+          margin: 0;
+          box-shadow: none;
+          border-radius: var(--radius-md);
+        }
+
+        .unit-empty-action {
+          border: 1px dashed var(--color-border-strong);
+          border-radius: var(--radius-md);
+          background: var(--color-bg-subtle);
+          padding: var(--space-12);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-16);
+        }
+
+        .unit-empty-title {
+          color: var(--color-text);
+          font-size: .88rem;
+          line-height: 1.35;
+          font-weight: 720;
+          margin-bottom: 2px;
+        }
+
+        .unit-empty-copy {
+          color: var(--color-text-secondary);
+          font-size: .78rem;
+          line-height: 1.45;
+        }
+
+        .config-link-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 32px;
+          padding: .36rem .72rem;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--color-border-strong);
+          background: var(--color-bg-container);
+          color: var(--color-primary-text) !important;
+          text-decoration: none !important;
+          font-size: .8rem;
+          line-height: 1.25;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .config-link-button:hover {
+          border-color: var(--color-primary);
+          color: var(--color-primary-hover) !important;
+          text-decoration: none !important;
+        }
+
         div[data-testid="stExpander"] {
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);
@@ -1252,6 +1588,24 @@ def inject_theme():
           }
           .metric-band {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .strategy-pair {
+            grid-template-columns: 1fr;
+          }
+          .pair-connector {
+            min-width: 0;
+          }
+          .pair-connector-line {
+            width: 1px;
+            height: 24px;
+            margin: var(--space-8) 0;
+          }
+          .account-fields {
+            grid-template-columns: 1fr;
+          }
+          .unit-empty-action {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
 
@@ -1559,8 +1913,7 @@ def runtime_health_label(global_data):
 
 def dashboard_metrics(accounts_data, strategy_data, global_data):
     units = strategy_data.get("units", [])
-    enabled_units = sum(1 for unit in units if unit.get("enabled", True))
-    symbol_count = sum(len(unit.get("symbols", [])) for unit in units)
+    unit_count = len(units)
     checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
     blocker_count = int((checks["状态"] == "ERROR").sum()) if not checks.empty else 0
     dry_run = bool(global_data.get("dry_run", True))
@@ -1589,10 +1942,10 @@ def dashboard_metrics(accounts_data, strategy_data, global_data):
             "help": tr("未发现运行日志") if runtime_label == tr("未检测") else tr("最近更新"),
         },
         {
-            "label": tr("交易对"),
-            "value": symbol_count,
+            "label": tr("策略单元"),
+            "value": unit_count,
             "class": "",
-            "help": f"{tr('策略单元')} {enabled_units}",
+            "help": "",
         },
     ]
 
@@ -1621,13 +1974,23 @@ def used_strategy_accounts(strategy_data):
             ("hedge master", hedge.get("account")),
         ]:
             if account:
-                used.append({"unit": unit.get("name"), "role": role, "account": account})
+                used.append({"unit": unit.get("name"), "role": role, "account": account, "enabled": True})
         for item in source.get("followers", []):
-            if item.get("enabled", True):
-                used.append({"unit": unit.get("name"), "role": "source follower", "account": item.get("account")})
+            if item.get("account"):
+                used.append({
+                    "unit": unit.get("name"),
+                    "role": "source follower",
+                    "account": item.get("account"),
+                    "enabled": bool(item.get("enabled", True)),
+                })
         for item in hedge.get("followers", []):
-            if item.get("enabled", True):
-                used.append({"unit": unit.get("name"), "role": "hedge follower", "account": item.get("account")})
+            if item.get("account"):
+                used.append({
+                    "unit": unit.get("name"),
+                    "role": "hedge follower",
+                    "account": item.get("account"),
+                    "enabled": bool(item.get("enabled", True)),
+                })
     return used
 
 
@@ -1644,17 +2007,24 @@ def preflight_rows(accounts_data, strategy_data):
     rows = []
     for item in used_strategy_accounts(strategy_data):
         cfg = accounts.get(item["account"], {})
+        strategy_enabled = bool(item.get("enabled", True))
         exists = bool(cfg)
         enabled = bool(cfg.get("enabled", True)) if exists else False
         has_credentials = account_has_credentials(cfg) if exists else False
-        status = "OK" if exists and enabled and has_credentials else "ERROR"
-        if not exists:
+        if not strategy_enabled:
+            status = "SKIP"
+            reason = "子账号未启用"
+        elif not exists:
+            status = "ERROR"
             reason = "账号不存在"
         elif not enabled:
+            status = "ERROR"
             reason = "账号已禁用"
         elif not has_credentials:
+            status = "ERROR"
             reason = "缺少 API key/token 或 secret"
         else:
+            status = "OK"
             reason = ""
         rows.append({
             "状态": status,
@@ -2403,6 +2773,235 @@ def grouped_units_view(strategy_data, accounts_data):
             render_table(unit.get("symbols", []))
 
 
+def member_summary(
+        accounts,
+        account_name,
+        enabled,
+        ratio,
+        missing_label,
+        leverage=None,
+        margin_mode=None,
+        ratio_label="比例"):
+    cfg = accounts.get(account_name or "", {})
+    has_account = bool(account_name)
+    return {
+        "account": account_name or tr(missing_label),
+        "configured": has_account,
+        "enabled": bool(enabled) if has_account else False,
+        "ratio": str(ratio or ""),
+        "ratio_label": ratio_label,
+        "leverage": str(leverage or "") if has_account else "",
+        "margin_mode": str(margin_mode or "") if has_account else "",
+        "exists": bool(cfg),
+    }
+
+
+def account_pair_card_html(exchange, member, unit_name):
+    configured = member["configured"]
+    enabled = member["enabled"]
+    status_text = tr("启用中") if enabled else tr("未启用")
+    if not configured:
+        status_text = tr("未配置")
+    status_class = "ok" if configured and enabled else "muted"
+    card_class = f"account-card {exchange.lower()}"
+    if not configured:
+        card_class += " missing"
+    ratio_text = member["ratio"] if member["ratio"] else "-"
+    ratio_label = member.get("ratio_label") or "比例"
+    leverage_text = member["leverage"] if member["leverage"] else "-"
+    margin_mode_text = member["margin_mode"] if member["margin_mode"] else "-"
+    account_class = "" if configured else " muted"
+    configure_href = esc(page_href("策略配置", unit_name))
+    return (
+        f'<a class="account-card-link" href="{configure_href}" target="_self" title="{esc(tr("前往配置"))}">'
+        f'<div class="{card_class}">'
+        '<div class="account-card-head">'
+        f'<div class="exchange-name">{esc(exchange)}</div>'
+        f'<span class="mini-pill {status_class}">{esc(status_text)}</span>'
+        '</div>'
+        '<div class="account-fields">'
+        '<div class="account-field">'
+        f'<div class="field-label">{esc(tr("账号"))}</div>'
+        f'<div class="field-value{account_class}">{esc(member["account"])}</div>'
+        '</div>'
+        '<div class="account-field">'
+        f'<div class="field-label">{esc(tr(ratio_label))}</div>'
+        f'<div class="field-value">{esc(ratio_text)}</div>'
+        '</div>'
+        '<div class="account-field">'
+        f'<div class="field-label">{esc(tr("杠杆"))}</div>'
+        f'<div class="field-value">{esc(leverage_text)}</div>'
+        '</div>'
+        '<div class="account-field">'
+        f'<div class="field-label">{esc(tr("保证金模式"))}</div>'
+        f'<div class="field-value">{esc(margin_mode_text)}</div>'
+        '</div>'
+        '</div>'
+        '</div>'
+        '</a>'
+    )
+
+
+def strategy_pair_html(pair_label, gate_member, websea_member, unit_name):
+    return (
+        '<div class="strategy-pair">'
+        f'{account_pair_card_html("Gate", gate_member, unit_name)}'
+        '<div class="pair-connector">'
+        f'<span>{esc(pair_label)}</span>'
+        '<div class="pair-connector-line"></div>'
+        f'<span>{esc(tr("关系"))}</span>'
+        '</div>'
+        f'{account_pair_card_html("Websea", websea_member, unit_name)}'
+        '</div>'
+    )
+
+
+def symbol_section_html(symbols, unit_name):
+    title = esc(tr("交易对映射"))
+    symbols_href = esc(page_href("交易对配置", unit_name))
+    if not symbols:
+        return (
+            '<div class="unit-symbol-section">'
+            f'<div class="unit-subsection-title">{title}</div>'
+            '<div class="unit-empty-action">'
+            '<div>'
+            f'<div class="unit-empty-title">{esc(tr("当前策略单元还没有交易对"))}</div>'
+            f'<div class="unit-empty-copy">{esc(tr("请在交易对页面新增映射规则。"))}</div>'
+            '</div>'
+            f'<a class="config-link-button" href="{symbols_href}" target="_self">{esc(tr("前往配置"))}</a>'
+            '</div>'
+            '</div>'
+        )
+
+    rows = []
+    for item in symbols:
+        status = tr("启用中") if item.get("enabled", True) else tr("未启用")
+        rows.append({
+            tr("状态"): status,
+            "Gate": item.get("source_symbol", ""),
+            "Websea": item.get("hedge_symbol", ""),
+            tr("比例"): item.get("ratio", ""),
+            "min_sync_delta": item.get("min_sync_delta", ""),
+            "source_step": item.get("source_step", ""),
+            "hedge_step": item.get("hedge_step", ""),
+        })
+    table_html = pd.DataFrame(rows).to_html(index=False, escape=True, classes="ws-table", border=0)
+    return (
+        '<div class="unit-symbol-section">'
+        f'<div class="unit-subsection-title">{title}</div>'
+        f'<div class="ws-table-wrap">{table_html}</div>'
+        '</div>'
+    )
+
+
+def render_strategy_unit_cards(strategy_data, accounts_data):
+    accounts = accounts_data.get("accounts", {})
+    units = strategy_data.get("units", [])
+    if not units:
+        render_empty("还没有策略单元", "请先在策略页面新增策略单元，再配置 Gate 与 Websea 的 master/sub 关系。")
+        return
+
+    st.markdown('<div class="strategy-unit-stack">', unsafe_allow_html=True)
+    for unit in units:
+        unit_name = str(unit.get("name") or "")
+        source = unit.get("source", {})
+        hedge = unit.get("hedge", {})
+        source_followers = source.get("followers", [])
+        hedge_followers = hedge.get("followers", [])
+        sub_pair_count = max(len(source_followers), len(hedge_followers))
+        symbols = unit.get("symbols", [])
+        enabled = bool(unit.get("enabled", True))
+        card_class = "strategy-unit-card" if enabled else "strategy-unit-card disabled"
+        status_text = tr("启用中") if enabled else tr("未启用")
+        status_class = "ok" if enabled else "muted"
+        pair_html = []
+        gate_master = member_summary(
+            accounts,
+            source.get("account"),
+            True,
+            "1",
+            "未配置 Gate 账号",
+            source.get("leverage"),
+            source.get("margin_mode"),
+            "基准比例",
+        )
+        websea_master = member_summary(
+            accounts,
+            hedge.get("account"),
+            enabled,
+            hedge.get("ratio", "1"),
+            "未配置 Websea 账号",
+            hedge.get("leverage"),
+            hedge.get("margin_mode"),
+            "对冲比例",
+        )
+        pair_html.append(strategy_pair_html("master-master", gate_master, websea_master, unit_name))
+
+        for idx in range(sub_pair_count):
+            source_member = source_followers[idx] if idx < len(source_followers) else {}
+            hedge_member = hedge_followers[idx] if idx < len(hedge_followers) else {}
+            gate_member = member_summary(
+                accounts,
+                source_member.get("account"),
+                source_member.get("enabled", False),
+                source_member.get("ratio", ""),
+                "未配置 Gate 账号",
+                source.get("leverage"),
+                source.get("margin_mode"),
+                "跟随比例",
+            )
+            websea_member = member_summary(
+                accounts,
+                hedge_member.get("account"),
+                hedge_member.get("enabled", False),
+                hedge_member.get("ratio", ""),
+                "未配置 Websea 账号",
+                hedge.get("leverage"),
+                hedge.get("margin_mode"),
+                "跟随比例",
+            )
+            pair_html.append(strategy_pair_html(f"sub-sub #{idx + 1}", gate_member, websea_member, unit_name))
+
+        if sub_pair_count == 0:
+            strategy_href = esc(page_href("策略配置", unit_name))
+            pair_html.append(
+                '<div class="unit-empty-action">'
+                '<div>'
+                f'<div class="unit-empty-title">{esc(tr("当前策略单元还没有子账号配对"))}</div>'
+                f'<div class="unit-empty-copy">{esc(tr("master 关系已展示；如需跟随子账号，请到策略页面配置 sub 账号。"))}</div>'
+                '</div>'
+                f'<a class="config-link-button" href="{strategy_href}" target="_self">{esc(tr("前往配置"))}</a>'
+                '</div>'
+            )
+
+        st.markdown(
+            (
+                f'<details class="{card_class}" open>'
+                '<summary>'
+                '<div class="strategy-unit-head">'
+                '<div>'
+                f'<div class="strategy-unit-title">{esc(tr("策略单元"))}：{esc(str(unit.get("name") or "-"))}</div>'
+                '<div class="strategy-unit-meta">'
+                f'<span class="mini-pill {status_class}">{esc(status_text)}</span>'
+                f'<span class="mini-pill">{esc(tr("Hedge 模式"))}：{esc(str(hedge.get("mode", "-")))}</span>'
+                f'<span class="mini-pill">{esc(tr("交易对数量"))}：{len(symbols)}</span>'
+                f'<span class="mini-pill">{esc(tr("子账号对"))}：{sub_pair_count}</span>'
+                '</div>'
+                '</div>'
+                '<span class="strategy-unit-chevron">›</span>'
+                '</div>'
+                '</summary>'
+                '<div class="strategy-pair-list">'
+                f'{"".join(pair_html)}'
+                '</div>'
+                f'{symbol_section_html(symbols, unit_name)}'
+                '</details>'
+            ),
+            unsafe_allow_html=True,
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def help_page():
     render_section("使用说明", "说明内容保存在 config/usage_guide.md，可在页面中直接编辑并保存。")
     guide_text = load_text(USAGE_GUIDE_PATH, DEFAULT_USAGE_GUIDE)
@@ -2462,21 +3061,8 @@ def main():
 
     if page == "分组总览":
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
-        render_section("系统状态", "后端同步引擎需单独运行。这里集中查看配置检查和日志状态。")
-        checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
-        if not checks.empty and (checks["状态"] == "ERROR").any():
-            st.error(tr("当前配置存在会阻断同步的问题：有启用账号缺少密钥、被禁用或不存在。"))
-        elif not checks.empty:
-            st.success(tr("启用策略账号的基础配置检查通过。"))
-        if checks.empty:
-            render_empty("未检测", "当前没有可检测的策略账号。请先配置并启用策略单元。")
-        else:
-            render_table(checks)
-        render_section("运行健康", "用于判断同步引擎是否已经产生运行日志或状态文件。")
-        render_table(log_health_row(global_data))
-
-        render_section("账号配对", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示。")
-        grouped_units_view(strategy_data, accounts_data)
+        render_section("策略单元", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示，快速确认每个策略单元的账号、比例和启用状态。")
+        render_strategy_unit_cards(strategy_data, accounts_data)
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
         live_account_requested = st.button(tr("刷新实时账户信息"))
         if not live_account_requested:
@@ -2543,6 +3129,19 @@ def main():
                     st.plotly_chart(pnl_fig, use_container_width=True)
             else:
                 st.info(tr("当前无持仓"))
+
+        render_section("系统状态", "后端同步引擎需单独运行。这里列出策略单元涉及的主账号和子账号配置检查；未启用的子账号会标记为 SKIP，不计为阻断。")
+        checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
+        if not checks.empty and (checks["状态"] == "ERROR").any():
+            st.error(tr("当前配置存在会阻断同步的问题：有启用账号缺少密钥、被禁用或不存在。"))
+        elif not checks.empty:
+            st.success(tr("启用策略账号的基础配置检查通过。"))
+        if checks.empty:
+            render_empty("未检测", "当前没有可检测的策略账号。请先配置并启用策略单元。")
+        else:
+            render_table(checks)
+        render_section("运行健康", "用于判断同步引擎是否已经产生运行日志或状态文件。")
+        render_table(log_health_row(global_data))
 
     if page == "账号管理":
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
@@ -2624,25 +3223,33 @@ def main():
         render_section("策略单元配置", "策略单元定义 Gate source 与 Websea hedge 的主从关系。")
         gate_accounts = account_names(accounts_data, "gate")
         websea_accounts = account_names(accounts_data, "websea")
+        target_unit_name = requested_unit_name()
 
-        with st.form("new_unit_form"):
-            render_section("新增策略单元")
-            new_unit_name = st.text_input(tr("策略单元名称"), key="new_unit_name")
-            create_unit = st.form_submit_button(tr("新增策略单元"))
-            if create_unit:
-                if not new_unit_name.strip():
-                    st.error(tr("策略单元名称不能为空"))
-                    st.stop()
-                if any(u.get("name") == new_unit_name.strip() for u in strategy_data.get("units", [])):
-                    st.error(tr("策略单元名称已存在"))
-                    st.stop()
-                strategy_data.setdefault("units", []).append(default_unit(new_unit_name.strip()))
-                save_json(STRATEGY_PATH, strategy_data)
-                st.success(tr("已新增策略单元"))
-                st.rerun()
+        render_section("新增策略单元")
+        new_unit_name = st.text_input(tr("策略单元名称"), key="new_unit_name")
+        create_unit = st.button(tr("新增策略单元"), key="create_unit")
+        if create_unit:
+            if not new_unit_name.strip():
+                st.error(tr("策略单元名称不能为空"))
+                st.stop()
+            if any(u.get("name") == new_unit_name.strip() for u in strategy_data.get("units", [])):
+                st.error(tr("策略单元名称已存在"))
+                st.stop()
+            strategy_data.setdefault("units", []).append(default_unit(new_unit_name.strip()))
+            save_json(STRATEGY_PATH, strategy_data)
+            st.success(tr("已新增策略单元"))
+            st.rerun()
 
         for unit in strategy_data.get("units", []):
-            with st.expander(unit.get("name"), expanded=True):
+            unit_name = str(unit.get("name") or "")
+            is_target_unit = bool(target_unit_name) and unit_name == target_unit_name
+            expanded = is_target_unit or not target_unit_name
+            if is_target_unit:
+                st.markdown(
+                    f'<div id="unit-{esc(unit_name)}" data-unit-anchor="{esc(unit_name)}"></div>',
+                    unsafe_allow_html=True,
+                )
+            with st.expander(unit.get("name"), expanded=expanded):
                 source = unit.setdefault("source", {})
                 hedge = unit.setdefault("hedge", {})
 
@@ -2771,6 +3378,38 @@ def main():
                         st.success(tr("已删除策略单元"))
                         st.rerun()
 
+        if target_unit_name:
+            target_unit_json = json.dumps(target_unit_name, ensure_ascii=False)
+            components.html(
+                f"""
+                <script>
+                (() => {{
+                  const targetUnit = {target_unit_json};
+                  const parentDoc = window.parent.document;
+                  const escapeValue = (value) => (
+                    window.parent.CSS && window.parent.CSS.escape
+                      ? window.parent.CSS.escape(value)
+                      : String(value).replace(/"/g, '\\"')
+                  );
+                  let attempts = 0;
+                  const scrollToTarget = () => {{
+                    attempts += 1;
+                    const anchor = parentDoc.querySelector(`[data-unit-anchor="${{escapeValue(targetUnit)}}"]`);
+                    if (anchor) {{
+                      anchor.scrollIntoView({{ block: "start", behavior: attempts > 2 ? "auto" : "smooth" }});
+                      return;
+                    }}
+                    if (attempts < 30) {{
+                      setTimeout(scrollToTarget, 120);
+                    }}
+                  }};
+                  setTimeout(scrollToTarget, 120);
+                }})();
+                </script>
+                """,
+                height=0,
+            )
+
     if page == "交易对配置":
         render_section("交易对配置", "交易对规则决定 Gate 仓位如何换算成 Websea 目标仓位。")
         units = strategy_data.get("units", [])
@@ -2778,7 +3417,12 @@ def main():
             st.info(tr("还没有策略单元"))
         else:
             unit_names = [u.get("name") for u in units]
-            selected_unit_name = st.selectbox(tr("策略单元"), unit_names)
+            target_unit_name = requested_unit_name()
+            selected_unit_name = st.selectbox(
+                tr("策略单元"),
+                unit_names,
+                index=select_index(unit_names, target_unit_name or unit_names[0]),
+            )
             unit = next(u for u in units if u.get("name") == selected_unit_name)
             symbols = unit.setdefault("symbols", [])
 
