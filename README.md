@@ -136,6 +136,26 @@ docker run --rm -it \
   gate-websea-hedger
 ```
 
+## Streamlit Community Cloud 预览
+
+如果只希望让别人体验页面和配置流程，可以部署 `streamlit_app.py` 到 Streamlit Community Cloud。
+
+该入口会自动开启 Demo 预览模式：
+
+- 使用内置示例账号、策略单元和交易对；
+- 所有编辑只保存在当前浏览器会话；
+- 不读取真实 `config/accounts.json`；
+- 不连接 Gate / Websea 接口；
+- 不启动同步引擎，也不会真实下单。
+
+部署时选择：
+
+```text
+Main file path: streamlit_app.py
+```
+
+依赖使用仓库根目录的 `requirements.txt`。
+
 ## 热加载
 
 以下文件改动后会自动重载：

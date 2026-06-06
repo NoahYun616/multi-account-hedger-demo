@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import html
 import json
+import os
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -20,6 +21,7 @@ ACCOUNTS_PATH = CONFIG_DIR / "accounts.json"
 STRATEGY_PATH = CONFIG_DIR / "strategy_config.json"
 GLOBAL_PATH = CONFIG_DIR / "global_config.json"
 USAGE_GUIDE_PATH = CONFIG_DIR / "usage_guide.md"
+DEMO_MODE_ENV = "HEDGER_DEMO_MODE"
 
 LANGUAGE_OPTIONS = {
     "中文": "zh",
@@ -562,23 +564,163 @@ class DashboardRuntime:
     dry_run = True
 
 
+def demo_mode():
+    return str(os.getenv(DEMO_MODE_ENV, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def demo_accounts_data():
+    return {
+        "accounts": {
+            "gate_demo_master": {
+                "exchange": "gate",
+                "enabled": True,
+                "api_key": "DEMO_GATE_API_KEY",
+                "api_secret": "DEMO_GATE_API_SECRET",
+                "user_id": "DEMO_GATE_UID",
+                "base_url": "https://api.gateio.ws/api/v4",
+                "ws_url": "wss://fx-ws.gateio.ws/v4/ws/usdt",
+            },
+            "gate_demo_sub": {
+                "exchange": "gate",
+                "enabled": True,
+                "api_key": "DEMO_GATE_SUB_KEY",
+                "api_secret": "DEMO_GATE_SUB_SECRET",
+                "base_url": "https://api.gateio.ws/api/v4",
+            },
+            "websea_demo_master": {
+                "exchange": "websea",
+                "enabled": True,
+                "token": "DEMO_WEBSEA_TOKEN",
+                "secret_key": "DEMO_WEBSEA_SECRET",
+                "base_url": "https://oapi.websea.com",
+            },
+            "websea_demo_sub": {
+                "exchange": "websea",
+                "enabled": True,
+                "token": "DEMO_WEBSEA_SUB_TOKEN",
+                "secret_key": "DEMO_WEBSEA_SUB_SECRET",
+                "base_url": "https://oapi.websea.com",
+            },
+        },
+        "telegram": {"enabled": False, "bot_token": "", "chat_id": ""},
+    }
+
+
+def demo_global_data():
+    return {
+        "poll_interval_sec": 1,
+        "debounce_ms": 80,
+        "http_timeout": 10,
+        "ws_ping_interval": 10,
+        "ws_ping_timeout": 10,
+        "reconnect_delay_sec": 3,
+        "state_file": "logs/demo_state.json",
+        "alert_cooldown_sec": 60,
+        "sync_timeout_warn_sec": 3,
+        "max_position_deviation": "0",
+        "dry_run": True,
+        "log_level": "INFO",
+        "max_concurrent_adjustments": 20,
+        "min_reload_interval_sec": 1,
+        "order_retry_times": 3,
+        "order_retry_delay_sec": 0.5,
+    }
+
+
+def demo_strategy_data():
+    return {
+        "units": [
+            {
+                "name": "Demo BTC Hedge",
+                "enabled": True,
+                "source": {
+                    "account": "gate_demo_master",
+                    "exchange": "gate",
+                    "settle": "usdt",
+                    "leverage": 10,
+                    "margin_mode": "cross",
+                    "followers": [
+                        {"account": "gate_demo_sub", "ratio": "0.5", "enabled": True}
+                    ],
+                },
+                "hedge": {
+                    "account": "websea_demo_master",
+                    "exchange": "websea",
+                    "mode": "opposite",
+                    "ratio": "1",
+                    "leverage": 10,
+                    "margin_mode": "cross",
+                    "followers": [
+                        {"account": "websea_demo_sub", "ratio": "0.5", "enabled": True}
+                    ],
+                },
+                "symbols": [
+                    {
+                        "source_symbol": "BTC_USDT",
+                        "hedge_symbol": "BTC-USDT",
+                        "enabled": True,
+                        "ratio": "0.1",
+                        "source_amount_multiplier": "0.0001",
+                        "hedge_amount_multiplier": "0.001",
+                        "min_sync_delta": "1",
+                        "source_step": "1",
+                        "hedge_step": "1",
+                        "source_min_qty": "1",
+                        "hedge_min_qty": "1",
+                        "max_source_pos": "1000",
+                        "max_hedge_pos": "100",
+                        "max_adjust_qty": "50",
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def demo_initial_value(path: Path):
+    if path == ACCOUNTS_PATH:
+        return demo_accounts_data()
+    if path == GLOBAL_PATH:
+        return demo_global_data()
+    if path == STRATEGY_PATH:
+        return demo_strategy_data()
+    return {}
+
+
+def session_json_key(path: Path):
+    return f"demo_json:{path.as_posix()}"
+
+
 def load_json(path: Path):
+    if demo_mode():
+        key = session_json_key(path)
+        if key not in st.session_state:
+            st.session_state[key] = json.loads(json.dumps(demo_initial_value(path), ensure_ascii=False))
+        return json.loads(json.dumps(st.session_state[key], ensure_ascii=False))
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def save_json(path: Path, data):
+    if demo_mode():
+        st.session_state[session_json_key(path)] = json.loads(json.dumps(data, ensure_ascii=False))
+        return
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_text(path: Path, default: str = ""):
+    if demo_mode():
+        return st.session_state.setdefault(f"demo_text:{path.as_posix()}", default)
     if not path.exists():
         return default
     return path.read_text(encoding="utf-8")
 
 
 def save_text(path: Path, text: str):
+    if demo_mode():
+        st.session_state[f"demo_text:{path.as_posix()}"] = text
+        return
     path.write_text(text, encoding="utf-8")
 
 
@@ -2524,6 +2666,8 @@ def mask_key(value):
 
 
 def ensure_files():
+    if demo_mode():
+        return
     CONFIG_DIR.mkdir(exist_ok=True)
     if not ACCOUNTS_PATH.exists():
         save_json(ACCOUNTS_PATH, {"accounts": {}, "telegram": {"enabled": False, "bot_token": "", "chat_id": ""}})
@@ -3715,6 +3859,8 @@ def main():
 
     render_sidebar_resume_button()
     render_app_header(page, accounts_data, strategy_data, global_data)
+    if demo_mode():
+        st.info("Demo 预览模式：仅用于体验账号、策略和交易对配置流程；数据只保存在当前浏览器会话，不会连接交易所，也不会启动真实对冲跟单。")
 
     if page == "分组总览":
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
@@ -3723,7 +3869,9 @@ def main():
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
         live_account_requested = bool(st.session_state.get("live_account_requested")) or live_refresh_requested()
         live_account_placeholder = st.empty()
-        if not live_account_requested:
+        if demo_mode():
+            render_empty("Demo 预览模式", "实时账户读取已关闭。请在账号、策略和交易对页面体验配置流程。")
+        elif not live_account_requested:
             with live_account_placeholder.container(border=True):
                 empty_copy, empty_action = st.columns([4, 1])
                 with empty_copy:
@@ -3742,7 +3890,7 @@ def main():
                         on_click=request_live_account_refresh,
                     )
 
-        if live_account_requested:
+        if live_account_requested and not demo_mode():
             with st.container(border=True):
                 toolbar_left, toolbar_right = st.columns([4, 1])
                 with toolbar_right:
@@ -4142,7 +4290,7 @@ def main():
                 with col2:
                     st.text_input("Gate settle", value=source_settle, disabled=True, key=f"{selected_unit_name}_auto_settle")
 
-                if st.button(tr("自动获取并新增"), type="primary"):
+                if st.button(tr("自动获取并新增"), type="primary", disabled=demo_mode()):
                     try:
                         auto_result = auto_symbol_config(new_source_symbol, source_settle)
                         new_item = auto_result["config"]
@@ -4162,6 +4310,8 @@ def main():
                         st.rerun()
                     except Exception as exc:
                         st.error(str(exc))
+                if demo_mode():
+                    render_form_helper_note("Demo 预览模式不会请求交易所接口；可在下方高级参数编辑中手动新增或修改交易对。", compact=True)
 
                 render_config_subsection("当前交易对")
                 if symbols:
