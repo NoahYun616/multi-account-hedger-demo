@@ -3310,6 +3310,48 @@ def normalize_symbol_rows(rows):
     return normalized
 
 
+SYMBOL_EDITOR_COLUMNS = [
+    "source_symbol",
+    "hedge_symbol",
+    "enabled",
+    "ratio",
+    "source_amount_multiplier",
+    "hedge_amount_multiplier",
+    "min_sync_delta",
+    "source_step",
+    "hedge_step",
+    "source_min_qty",
+    "hedge_min_qty",
+    "max_source_pos",
+    "max_hedge_pos",
+    "max_adjust_qty",
+]
+
+
+def blank_symbol_editor_row():
+    return {
+        "source_symbol": "",
+        "hedge_symbol": "",
+        "enabled": True,
+        "ratio": "1",
+        "source_amount_multiplier": "",
+        "hedge_amount_multiplier": "",
+        "min_sync_delta": "1",
+        "source_step": "1",
+        "hedge_step": "1",
+        "source_min_qty": "1",
+        "hedge_min_qty": "1",
+        "max_source_pos": "",
+        "max_hedge_pos": "",
+        "max_adjust_qty": "",
+    }
+
+
+def symbol_editor_dataframe(symbols):
+    rows = symbols if symbols else [blank_symbol_editor_row()]
+    return pd.DataFrame(rows, columns=SYMBOL_EDITOR_COLUMNS)
+
+
 def follower_side_fields(
         unit_name,
         leg_name,
@@ -4656,8 +4698,10 @@ def main():
 
                 with st.expander(tr("高级参数编辑"), expanded=False):
                     st.caption(tr("维护交易对映射、数量换算比例、步进和风控阈值。"))
+                    if not symbols:
+                        render_form_helper_note("当前没有交易对，可直接在下方空白行填写第一条交易对；未填写 source_symbol 和 hedge_symbol 的空行不会保存。", compact=True)
                     edited_symbols = st.data_editor(
-                        pd.DataFrame(symbols),
+                        symbol_editor_dataframe(symbols),
                         num_rows="dynamic",
                         width="stretch",
                         key=f"{selected_unit_name}_symbols_editor",
