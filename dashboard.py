@@ -127,6 +127,7 @@ I18N = {
         "前往获取": "Get API key",
         "获取 API Key 和 API Secret": "Get API Key and API Secret",
         "新增成功": "Added",
+        "已新增账号：": "Account added: ",
         "账号名称不能为空": "Account name is required",
         "策略单元说明": "Strategy Unit Notes",
         "策略单元用于定义一组 Gate source 与 Websea hedge 的对应关系，包括主账号、对冲方向、比例、杠杆、保证金模式和 follower 列表。": "Strategy units define one Gate source to Websea hedge relationship, including master accounts, hedge direction, ratio, leverage, margin mode, and follower lists.",
@@ -709,6 +710,20 @@ def sync_preview_storage():
 
     st.info(tr("正在读取浏览器本地配置..."))
     st.stop()
+
+
+def queue_toast(message: str):
+    st.session_state["pending_toast"] = message
+
+
+def render_pending_toast():
+    message = st.session_state.pop("pending_toast", "")
+    if not message:
+        return
+    if hasattr(st, "toast"):
+        st.toast(message)
+    else:
+        st.success(message)
 
 
 def load_json(path: Path):
@@ -4160,6 +4175,7 @@ def main():
 
     render_sidebar_resume_button()
     render_app_header(page, accounts_data, strategy_data, global_data)
+    render_pending_toast()
     if demo_mode():
         st.info("Cloud 配置体验版：首次打开为空配置；保存后的账号、策略和交易对会保存在当前浏览器，刷新后自动恢复。该版本不连接交易所，也不会启动真实对冲跟单。")
 
@@ -4339,16 +4355,17 @@ def main():
             submitted = st.form_submit_button(tr("新增账号"))
             if submitted:
                 try:
-                    if not account_name.strip():
+                    created_account_name = account_name.strip()
+                    if not created_account_name:
                         raise ValueError(tr("账号名称不能为空"))
                     add_account(
-                        account_name.strip(),
+                        created_account_name,
                         exchange,
                         api_key.strip(),
                         api_secret.strip(),
                         user_id=user_id.strip(),
                     )
-                    st.success(tr("新增成功"))
+                    queue_toast(f"{tr('已新增账号：')}{created_account_name}")
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
