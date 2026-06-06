@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-os.environ["HEDGER_DEMO_MODE"] = "true"
+os.environ["HEDGER_CLOUD_PREVIEW"] = "true"
 
 from dashboard import main
 

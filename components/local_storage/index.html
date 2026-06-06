@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const Streamlit = {
+        RENDER_EVENT: "streamlit:render",
+        setComponentReady: () => {
+          window.parent.postMessage(
+            { isStreamlitMessage: true, type: "streamlit:componentReady", apiVersion: 1 },
+            "*"
+          );
+        },
+        setComponentValue: (value) => {
+          window.parent.postMessage(
+            {
+              isStreamlitMessage: true,
+              type: "streamlit:setComponentValue",
+              value,
+              dataType: "json",
+            },
+            "*"
+          );
+        },
+        setFrameHeight: (height) => {
+          window.parent.postMessage(
+            { isStreamlitMessage: true, type: "streamlit:setFrameHeight", height },
+            "*"
+          );
+        },
+      };
+
+      const sendValue = (payload) => {
+        Streamlit.setComponentValue(payload);
+        Streamlit.setFrameHeight(0);
+      };
+
+      const parseStoredValue = (raw) => {
+        if (!raw) return null;
+        try {
+          return JSON.parse(raw);
+        } catch (error) {
+          return null;
+        }
+      };
+
+      const onRender = (event) => {
+        const args = event.data.args || {};
+        const storageKey = args.storageKey || "websea_multi_account_hedger_config_v2";
+        const readEnabled = args.readEnabled !== false;
+        const savePayload = args.savePayload || null;
+
+        try {
+          if (savePayload && savePayload.enabled) {
+            window.localStorage.setItem(storageKey, JSON.stringify(savePayload.value || {}));
+          }
+
+          if (!readEnabled) {
+            Streamlit.setFrameHeight(0);
+            return;
+          }
+
+          const raw = window.localStorage.getItem(storageKey);
+          sendValue({
+            status: "loaded",
+            hasValue: raw !== null,
+            value: parseStoredValue(raw),
+          });
+        } catch (error) {
+          sendValue({
+            status: "error",
+            message: error && error.message ? error.message : String(error),
+          });
+        }
+      };
+
+      window.addEventListener("message", (event) => {
+        if (event.data && event.data.type === Streamlit.RENDER_EVENT) {
+          onRender(event);
+        }
+      });
+      Streamlit.setComponentReady();
+      Streamlit.setFrameHeight(0);
+    </script>
+  </body>
+</html>

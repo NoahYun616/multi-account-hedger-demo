@@ -22,6 +22,13 @@ STRATEGY_PATH = CONFIG_DIR / "strategy_config.json"
 GLOBAL_PATH = CONFIG_DIR / "global_config.json"
 USAGE_GUIDE_PATH = CONFIG_DIR / "usage_guide.md"
 DEMO_MODE_ENV = "HEDGER_DEMO_MODE"
+CLOUD_PREVIEW_ENV = "HEDGER_CLOUD_PREVIEW"
+CLOUD_STORAGE_KEY = "websea_multi_account_hedger_config_v2"
+LOCAL_STORAGE_COMPONENT_PATH = Path(__file__).parent / "components" / "local_storage"
+browser_config_store = components.declare_component(
+    "browser_config_store",
+    path=str(LOCAL_STORAGE_COMPONENT_PATH),
+)
 
 LANGUAGE_OPTIONS = {
     "中文": "zh",
@@ -565,43 +572,16 @@ class DashboardRuntime:
 
 
 def demo_mode():
-    return str(os.getenv(DEMO_MODE_ENV, "")).strip().lower() in {"1", "true", "yes", "on"}
+    truthy = {"1", "true", "yes", "on"}
+    return (
+        str(os.getenv(DEMO_MODE_ENV, "")).strip().lower() in truthy
+        or str(os.getenv(CLOUD_PREVIEW_ENV, "")).strip().lower() in truthy
+    )
 
 
 def demo_accounts_data():
     return {
-        "accounts": {
-            "gate_demo_master": {
-                "exchange": "gate",
-                "enabled": True,
-                "api_key": "DEMO_GATE_API_KEY",
-                "api_secret": "DEMO_GATE_API_SECRET",
-                "user_id": "DEMO_GATE_UID",
-                "base_url": "https://api.gateio.ws/api/v4",
-                "ws_url": "wss://fx-ws.gateio.ws/v4/ws/usdt",
-            },
-            "gate_demo_sub": {
-                "exchange": "gate",
-                "enabled": True,
-                "api_key": "DEMO_GATE_SUB_KEY",
-                "api_secret": "DEMO_GATE_SUB_SECRET",
-                "base_url": "https://api.gateio.ws/api/v4",
-            },
-            "websea_demo_master": {
-                "exchange": "websea",
-                "enabled": True,
-                "token": "DEMO_WEBSEA_TOKEN",
-                "secret_key": "DEMO_WEBSEA_SECRET",
-                "base_url": "https://oapi.websea.com",
-            },
-            "websea_demo_sub": {
-                "exchange": "websea",
-                "enabled": True,
-                "token": "DEMO_WEBSEA_SUB_TOKEN",
-                "secret_key": "DEMO_WEBSEA_SUB_SECRET",
-                "base_url": "https://oapi.websea.com",
-            },
-        },
+        "accounts": {},
         "telegram": {"enabled": False, "bot_token": "", "chat_id": ""},
     }
 
@@ -628,53 +608,7 @@ def demo_global_data():
 
 
 def demo_strategy_data():
-    return {
-        "units": [
-            {
-                "name": "Demo BTC Hedge",
-                "enabled": True,
-                "source": {
-                    "account": "gate_demo_master",
-                    "exchange": "gate",
-                    "settle": "usdt",
-                    "leverage": 10,
-                    "margin_mode": "cross",
-                    "followers": [
-                        {"account": "gate_demo_sub", "ratio": "0.5", "enabled": True}
-                    ],
-                },
-                "hedge": {
-                    "account": "websea_demo_master",
-                    "exchange": "websea",
-                    "mode": "opposite",
-                    "ratio": "1",
-                    "leverage": 10,
-                    "margin_mode": "cross",
-                    "followers": [
-                        {"account": "websea_demo_sub", "ratio": "0.5", "enabled": True}
-                    ],
-                },
-                "symbols": [
-                    {
-                        "source_symbol": "BTC_USDT",
-                        "hedge_symbol": "BTC-USDT",
-                        "enabled": True,
-                        "ratio": "0.1",
-                        "source_amount_multiplier": "0.0001",
-                        "hedge_amount_multiplier": "0.001",
-                        "min_sync_delta": "1",
-                        "source_step": "1",
-                        "hedge_step": "1",
-                        "source_min_qty": "1",
-                        "hedge_min_qty": "1",
-                        "max_source_pos": "1000",
-                        "max_hedge_pos": "100",
-                        "max_adjust_qty": "50",
-                    }
-                ],
-            }
-        ]
-    }
+    return {"units": []}
 
 
 def demo_initial_value(path: Path):
@@ -691,12 +625,98 @@ def session_json_key(path: Path):
     return f"demo_json:{path.as_posix()}"
 
 
+def session_text_key(path: Path):
+    return f"demo_text:{path.as_posix()}"
+
+
+def json_copy(data):
+    return json.loads(json.dumps(data, ensure_ascii=False))
+
+
+def preview_initial_payload():
+    return {
+        "accounts": demo_accounts_data(),
+        "strategy": demo_strategy_data(),
+        "global": demo_global_data(),
+        "usage_guide": DEFAULT_USAGE_GUIDE,
+    }
+
+
+def normalize_preview_json(path: Path, data):
+    normalized = json_copy(data)
+    if path == GLOBAL_PATH:
+        normalized["dry_run"] = True
+        normalized.setdefault("state_file", "logs/demo_state.json")
+    return normalized
+
+
+def apply_preview_storage_payload(payload):
+    if not isinstance(payload, dict):
+        payload = {}
+    initial = preview_initial_payload()
+    json_items = [
+        ("accounts", ACCOUNTS_PATH),
+        ("strategy", STRATEGY_PATH),
+        ("global", GLOBAL_PATH),
+    ]
+    for payload_key, path in json_items:
+        value = payload.get(payload_key, initial[payload_key])
+        if not isinstance(value, dict):
+            value = initial[payload_key]
+        st.session_state[session_json_key(path)] = normalize_preview_json(path, value)
+    guide = payload.get("usage_guide", initial["usage_guide"])
+    st.session_state[session_text_key(USAGE_GUIDE_PATH)] = str(guide or initial["usage_guide"])
+
+
+def current_preview_storage_payload():
+    initial = preview_initial_payload()
+    return {
+        "accounts": st.session_state.get(session_json_key(ACCOUNTS_PATH), initial["accounts"]),
+        "strategy": st.session_state.get(session_json_key(STRATEGY_PATH), initial["strategy"]),
+        "global": normalize_preview_json(
+            GLOBAL_PATH,
+            st.session_state.get(session_json_key(GLOBAL_PATH), initial["global"]),
+        ),
+        "usage_guide": st.session_state.get(session_text_key(USAGE_GUIDE_PATH), initial["usage_guide"]),
+    }
+
+
+def sync_preview_storage():
+    if not demo_mode():
+        return
+
+    storage_loaded = bool(st.session_state.get("preview_storage_loaded"))
+    save_payload = {
+        "enabled": storage_loaded,
+        "value": current_preview_storage_payload() if storage_loaded else {},
+    }
+    result = browser_config_store(
+        storageKey=CLOUD_STORAGE_KEY,
+        readEnabled=not storage_loaded,
+        savePayload=save_payload,
+        key="browser_config_store",
+        default=None,
+    )
+
+    if storage_loaded:
+        return
+
+    if isinstance(result, dict) and result.get("status") in {"loaded", "error"}:
+        value = result.get("value") if result.get("hasValue") else preview_initial_payload()
+        apply_preview_storage_payload(value)
+        st.session_state["preview_storage_loaded"] = True
+        st.rerun()
+
+    st.info(tr("正在读取浏览器本地配置..."))
+    st.stop()
+
+
 def load_json(path: Path):
     if demo_mode():
         key = session_json_key(path)
         if key not in st.session_state:
-            st.session_state[key] = json.loads(json.dumps(demo_initial_value(path), ensure_ascii=False))
-        return json.loads(json.dumps(st.session_state[key], ensure_ascii=False))
+            st.session_state[key] = json_copy(demo_initial_value(path))
+        return json_copy(normalize_preview_json(path, st.session_state[key]))
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
@@ -704,14 +724,14 @@ def load_json(path: Path):
 
 def save_json(path: Path, data):
     if demo_mode():
-        st.session_state[session_json_key(path)] = json.loads(json.dumps(data, ensure_ascii=False))
+        st.session_state[session_json_key(path)] = normalize_preview_json(path, data)
         return
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def load_text(path: Path, default: str = ""):
     if demo_mode():
-        return st.session_state.setdefault(f"demo_text:{path.as_posix()}", default)
+        return st.session_state.setdefault(session_text_key(path), default)
     if not path.exists():
         return default
     return path.read_text(encoding="utf-8")
@@ -719,7 +739,7 @@ def load_text(path: Path, default: str = ""):
 
 def save_text(path: Path, text: str):
     if demo_mode():
-        st.session_state[f"demo_text:{path.as_posix()}"] = text
+        st.session_state[session_text_key(path)] = text
         return
     path.write_text(text, encoding="utf-8")
 
@@ -4116,6 +4136,7 @@ def main():
     init_ui_state()
     inject_theme()
     inject_client_ui_script()
+    sync_preview_storage()
     ensure_files()
     accounts_data = load_json(ACCOUNTS_PATH)
     strategy_data = load_json(STRATEGY_PATH)
@@ -4140,7 +4161,7 @@ def main():
     render_sidebar_resume_button()
     render_app_header(page, accounts_data, strategy_data, global_data)
     if demo_mode():
-        st.info("Demo 预览模式：仅用于体验账号、策略和交易对配置流程；数据只保存在当前浏览器会话，不会连接交易所，也不会启动真实对冲跟单。")
+        st.info("Cloud 配置体验版：首次打开为空配置；保存后的账号、策略和交易对会保存在当前浏览器，刷新后自动恢复。该版本不连接交易所，也不会启动真实对冲跟单。")
 
     if page == "分组总览":
         render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
@@ -4150,7 +4171,7 @@ def main():
         live_account_requested = bool(st.session_state.get("live_account_requested")) or live_refresh_requested()
         live_account_placeholder = st.empty()
         if demo_mode():
-            render_empty("Demo 预览模式", "实时账户读取已关闭。请在账号、策略和交易对页面体验配置流程。")
+            render_empty("Cloud 配置体验版", "实时账户读取已关闭。请在账号、策略和交易对页面体验完整配置流程。")
         elif not live_account_requested:
             with live_account_placeholder.container(border=True):
                 empty_copy, empty_action = st.columns([4, 1])
@@ -4591,7 +4612,7 @@ def main():
                     except Exception as exc:
                         st.error(str(exc))
                 if demo_mode():
-                    render_form_helper_note("Demo 预览模式不会请求交易所接口；可在下方高级参数编辑中手动新增或修改交易对。", compact=True)
+                    render_form_helper_note("Cloud 配置体验版不会请求交易所接口；可在下方高级参数编辑中手动新增或修改交易对。", compact=True)
 
                 render_config_subsection("当前交易对")
                 if symbols:
@@ -4639,8 +4660,11 @@ def main():
         if not bool(global_data.get("dry_run", True)):
             render_danger_panel("真实下单", "真实下单模式已开启。当前页面不会执行下单，但保存配置可能影响后端同步引擎。")
         with st.container(border=True):
-            dry_run = st.checkbox("dry_run", value=bool(global_data.get("dry_run", True)))
-            render_form_helper_note("开启 dry_run 时只模拟下单并记录请求；关闭后端同步引擎可能真实提交订单。", compact=True)
+            dry_run = st.checkbox("dry_run", value=bool(global_data.get("dry_run", True)), disabled=demo_mode())
+            if demo_mode():
+                render_form_helper_note("Cloud 配置体验版固定为 dry_run，不会真实下单。", compact=True)
+            else:
+                render_form_helper_note("开启 dry_run 时只模拟下单并记录请求；关闭后端同步引擎可能真实提交订单。", compact=True)
             max_concurrent = st.number_input(
                 "max_concurrent_adjustments",
                 min_value=1,

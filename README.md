@@ -136,17 +136,19 @@ docker run --rm -it \
   gate-websea-hedger
 ```
 
-## Streamlit Community Cloud 预览
+## Streamlit Community Cloud 配置体验版
 
 如果只希望让别人体验页面和配置流程，可以部署 `streamlit_app.py` 到 Streamlit Community Cloud。
 
-该入口会自动开启 Demo 预览模式：
+该入口会自动开启 Cloud 配置体验模式：
 
-- 使用内置示例账号、策略单元和交易对；
-- 所有编辑只保存在当前浏览器会话；
+- 首次打开为空配置，没有内置账号、策略单元和交易对；
+- 用户保存后的账号、策略单元、交易对和运行配置会写入当前浏览器的本地存储；
+- 同一浏览器刷新页面后会自动恢复配置；
+- 换浏览器、换设备、无痕窗口或清理站点数据后，不会恢复原配置；
 - 不读取真实 `config/accounts.json`；
 - 不连接 Gate / Websea 接口；
-- 不启动同步引擎，也不会真实下单。
+- 不启动同步引擎，也不会真实下单，`dry_run` 会固定保持开启。
 
 部署时选择：
 
