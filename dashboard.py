@@ -79,7 +79,7 @@ I18N = {
         "使用说明": "Guide",
         "查看运行状态、配置检查和策略单元。": "View runtime status, config checks, and strategy units.",
         "维护交易账号、启用状态、接口地址和密钥。": "Manage exchange accounts, enabled state, API endpoints, and credentials.",
-        "新增 Gate 或 Websea 账号，并挂载到指定策略单元。": "Add a Gate or Websea account and attach it to a strategy unit.",
+        "新增 Gate 或 Websea 账号，后续在策略配置中手动挂载。": "Add a Gate or Websea account, then attach it manually in Strategy Config.",
         "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。": "Configure master accounts, hedge direction, leverage, margin mode, and followers.",
         "维护交易对映射、数量换算比例、步进和风控阈值。": "Maintain symbol mapping, amount conversion, steps, and risk limits.",
         "编辑运行参数和原始 JSON，查看同步状态文件。": "Edit runtime settings and raw JSON, and inspect the sync state file.",
@@ -106,17 +106,21 @@ I18N = {
         "确认删除": "Confirm delete",
         "删除账号": "Delete Account",
         "已删除账号并清理策略引用": "Deleted account and cleaned strategy references",
-        "新账号会写入 accounts.json，并按选择挂载到指定策略单元。": "New accounts are written to accounts.json and attached to the selected strategy unit.",
+        "新账号只会写入 accounts.json，不会自动挂载到策略单元。请在策略配置中手动选择账号。": "New accounts are written only to accounts.json and are not attached to strategy units automatically. Select accounts manually in Strategy Config.",
         "账号名称": "Account name",
         "交易所": "Exchange",
         "角色": "Role",
         "策略单元名称": "Strategy unit name",
         "主/跟随": "Master/Follow",
         "比例": "Ratio",
+        "Gate 账号固定作为 source。": "Gate accounts are fixed as source.",
+        "Websea 账号固定作为 hedge。": "Websea accounts are fixed as hedge.",
+        "前往获取": "Get API key",
+        "获取 API Key 和 API Secret": "Get API Key and API Secret",
         "新增成功": "Added",
         "账号名称不能为空": "Account name is required",
-        "策略单元配置": "Strategy Unit Config",
-        "策略单元定义 Gate source 与 Websea hedge 的主从关系。": "Strategy units define the master/follower relationship between Gate source and Websea hedge.",
+        "策略单元说明": "Strategy Unit Notes",
+        "策略单元用于定义一组 Gate source 与 Websea hedge 的对应关系，包括主账号、对冲方向、比例、杠杆、保证金模式和 follower 列表。": "Strategy units define one Gate source to Websea hedge relationship, including master accounts, hedge direction, ratio, leverage, margin mode, and follower lists.",
         "新增策略单元": "Add Strategy Unit",
         "策略单元名称不能为空": "Strategy unit name is required",
         "策略单元名称已存在": "Strategy unit name already exists",
@@ -125,11 +129,15 @@ I18N = {
         "Source 主账号": "Source master account",
         "Source 杠杆": "Source leverage",
         "Source 保证金模式": "Source margin mode",
+        "Gate Source 主账号下单时使用的保证金模式。cross 为全仓，isolated 为逐仓。": "Margin mode used by the Gate Source master account when placing orders. cross means cross margin; isolated means isolated margin.",
         "Hedge 主账号": "Hedge master account",
         "Hedge 模式": "Hedge mode",
+        "决定 Websea Hedge 如何跟随 Gate Source。opposite 为反向对冲，same 为同向跟随。": "Controls how Websea Hedge follows Gate Source. opposite means reverse hedge; same means same-direction follow.",
         "Hedge 比例": "Hedge ratio",
+        "Websea Hedge 相对 Gate Source 的仓位换算比例，用于控制对冲敞口大小。": "Position conversion ratio for Websea Hedge relative to Gate Source, used to control the hedge exposure size.",
         "Hedge 杠杆": "Hedge leverage",
         "Hedge 保证金模式": "Hedge margin mode",
+        "Websea Hedge 主账号下单时使用的保证金模式。cross 为全仓，isolated 为逐仓。": "Margin mode used by the Websea Hedge master account when placing orders. cross means cross margin; isolated means isolated margin.",
         "保存策略单元": "Save Strategy Unit",
         "策略单元已保存": "Strategy unit saved",
         "确认删除策略单元": "Confirm strategy unit deletion",
@@ -155,6 +163,7 @@ I18N = {
         "配置 Gate master 的跟随子账户、启用状态和跟随比例。": "Configure Gate master follower sub accounts, enabled state, and follow ratio.",
         "配置 Websea master 的跟随子账户、启用状态和跟随比例。": "Configure Websea master follower sub accounts, enabled state, and follow ratio.",
         "点击新增后会同时添加一组 Gate 与 Websea 子账户。": "Click Add to create a Gate and Websea sub-account pair together.",
+        "每组子账户会分别跟随对应的主账户：Gate 子账户跟随 Gate Source 主账号，Websea 子账户跟随 Websea Hedge 主账号；启用后系统会按各自跟随比例同步目标仓位。": "Each sub-account pair follows its corresponding master account: the Gate sub account follows the Gate Source master, and the Websea sub account follows the Websea Hedge master. When enabled, targets are synced by each follow ratio.",
         "子账户不能重复": "Sub accounts cannot be duplicated",
         "交易对规则决定 Gate 仓位如何换算成 Websea 目标仓位。": "Symbol rules decide how Gate positions are converted into Websea target positions.",
         "自动新增交易对": "Auto Add Symbol",
@@ -170,6 +179,7 @@ I18N = {
         "常用运行参数可以在这里直接保存；更完整配置可在下方 JSON 编辑区修改。": "Common runtime settings can be saved here; full config is editable in the JSON area below.",
         "保存运行配置": "Save Runtime Config",
         "运行配置已保存": "Runtime config saved",
+        "开启 dry_run 时只模拟下单并记录请求；关闭后端同步引擎可能真实提交订单。": "When dry_run is enabled, orders are simulated and requests are logged only. When disabled, the backend engine may submit real orders.",
         "状态文件": "State File",
         "状态文件还不存在": "State file does not exist yet",
         "JSON 编辑": "JSON Editor",
@@ -199,6 +209,7 @@ I18N = {
         "基准比例": "Base ratio",
         "对冲比例": "Hedge ratio",
         "跟随比例": "Follow ratio",
+        "子账户相对对应主账户的仓位跟随比例。Gate 子账户跟随 Gate Source 主账号，Websea 子账户跟随 Websea Hedge 主账号。": "Position follow ratio of the sub account relative to its corresponding master account. Gate sub accounts follow the Gate Source master, and Websea sub accounts follow the Websea Hedge master.",
         "杠杆": "Leverage",
         "保证金模式": "Margin mode",
         "Hedge 模式": "Hedge mode",
@@ -410,7 +421,7 @@ source 到 hedge 的同步张数比例。
 PAGE_META = {
     "分组总览": ("总览", "查看运行状态、配置检查和策略单元。"),
     "账号管理": ("账号", "维护交易账号、启用状态、接口地址和密钥。"),
-    "新增账号": ("新增账号", "新增 Gate 或 Websea 账号，并挂载到指定策略单元。"),
+    "新增账号": ("新增账号", "新增 Gate 或 Websea 账号，后续在策略配置中手动挂载。"),
     "策略配置": ("策略", "配置主账号、对冲方向、杠杆、保证金模式和 follower 列表。"),
     "交易对配置": ("交易对", "维护交易对映射、数量换算比例、步进和风控阈值。"),
     "原始配置": ("原始配置", "编辑运行参数和原始 JSON，查看同步状态文件。"),
@@ -494,6 +505,10 @@ def toggle_sidebar():
 
 def toggle_theme():
     st.session_state["theme"] = "light" if current_theme() == "dark" else "dark"
+
+
+def request_live_account_refresh():
+    st.session_state["live_account_requested"] = True
 
 
 def app_href(page_slug=None, lang=None, sidebar=None, theme=None, unit=None, live=None):
@@ -595,6 +610,12 @@ def inject_theme():
           --color-danger-bg: #FFF1F2;
           --color-info: #2563EB;
           --color-info-bg: #EFF6FF;
+          --color-exchange-gate: #2354E6;
+          --color-exchange-gate-bg: #F3F6FF;
+          --color-exchange-gate-border: #C7D2FE;
+          --color-exchange-websea: #06C84A;
+          --color-exchange-websea-bg: #F0FFF5;
+          --color-exchange-websea-border: #B9F8D0;
           --space-4: 4px;
           --space-8: 8px;
           --space-12: 12px;
@@ -1091,6 +1112,85 @@ def inject_theme():
           font-size: .88rem;
         }
 
+        .form-helper-note {
+          display: flex;
+          align-items: flex-start;
+          gap: var(--space-8);
+          margin-top: var(--space-12);
+          color: var(--color-text-secondary);
+          font-size: .75rem;
+          line-height: 1.5;
+        }
+
+        .form-helper-note::before {
+          content: "!";
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 16px;
+          width: 16px;
+          height: 16px;
+          margin-top: 1px;
+          border: 1px solid var(--color-border-strong);
+          border-radius: 999px;
+          color: var(--color-text-tertiary);
+          font-size: .68rem;
+          font-weight: 700;
+          line-height: 1;
+        }
+
+        .form-helper-note.compact {
+          margin-top: 2px;
+          margin-bottom: var(--space-8);
+        }
+
+        .param-help-label {
+          position: relative;
+          display: inline-block;
+          width: fit-content;
+          margin-bottom: var(--space-8);
+          color: var(--color-text);
+          font-size: .92rem;
+          font-weight: 560;
+          line-height: 1.35;
+          border-bottom: 1px dashed var(--color-text-tertiary);
+          cursor: help;
+        }
+
+        .param-help-label:hover {
+          color: var(--color-primary-text);
+          border-bottom-color: var(--color-primary);
+        }
+
+        .param-help-label::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          left: 0;
+          bottom: calc(100% + 8px);
+          z-index: 20;
+          width: max-content;
+          max-width: min(360px, 72vw);
+          padding: var(--space-8) var(--space-12);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          background: var(--color-bg-container);
+          color: var(--color-text);
+          box-shadow: var(--shadow-card);
+          font-size: .78rem;
+          font-weight: 500;
+          line-height: 1.45;
+          white-space: normal;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(2px);
+          transition: opacity .12s ease, transform .12s ease;
+        }
+
+        .param-help-label:hover::after {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
         .panel {
           border: 1px solid var(--color-border);
           background: var(--color-bg-container);
@@ -1151,9 +1251,25 @@ def inject_theme():
           text-underline-offset: 3px;
         }
 
+        .field-helper-link {
+          display: inline-block;
+          margin: var(--space-4) 0 var(--space-12);
+          color: var(--color-primary);
+          font-size: .82rem;
+          font-weight: 650;
+          line-height: 1.4;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+
+        .field-helper-link:hover {
+          color: var(--color-primary-text);
+        }
+
         .metric-band {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
+          align-items: stretch;
           gap: var(--space-16);
           margin-bottom: var(--space-24);
         }
@@ -1163,8 +1279,32 @@ def inject_theme():
           border: 1px solid var(--color-border);
           border-radius: var(--radius-lg);
           padding: var(--space-16);
+          height: 100%;
           min-height: 100px;
           box-shadow: var(--shadow-card);
+        }
+
+        .metric-link {
+          display: block;
+          height: 100%;
+          color: inherit !important;
+          text-decoration: none !important;
+          border-radius: var(--radius-lg);
+        }
+
+        .metric-link:hover .metric-tile {
+          border-color: var(--color-primary);
+          box-shadow: 0 10px 28px rgba(20, 184, 166, .14);
+          transform: translateY(-1px);
+        }
+
+        .metric-link:focus-visible {
+          outline: 2px solid rgba(20, 184, 166, .42);
+          outline-offset: 3px;
+        }
+
+        .metric-link .metric-tile {
+          transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
         }
 
         .metric-tile.danger {
@@ -1349,6 +1489,8 @@ def inject_theme():
         }
 
         .account-card {
+          position: relative;
+          overflow: hidden;
           min-height: 104px;
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
@@ -1368,19 +1510,61 @@ def inject_theme():
           box-shadow: 0 8px 24px rgba(20, 184, 166, .12);
         }
 
+        a.account-card-link:hover .account-card.gate {
+          border-color: var(--color-exchange-gate);
+          box-shadow: 0 8px 24px rgba(35, 84, 230, .12);
+        }
+
+        a.account-card-link:hover .account-card.websea {
+          border-color: var(--color-exchange-websea);
+          box-shadow: 0 8px 24px rgba(6, 200, 74, .12);
+        }
+
         a.account-card-link:focus-visible {
           outline: 2px solid rgba(20, 184, 166, .42);
           outline-offset: 3px;
         }
 
         .account-card.gate {
-          border-color: rgba(20, 184, 166, .34);
-          background: linear-gradient(180deg, rgba(20, 184, 166, .12), rgba(20, 184, 166, .05));
+          border-color: var(--color-exchange-gate-border);
+          background: var(--color-bg-subtle);
         }
 
         .account-card.websea {
-          border-color: rgba(37, 99, 235, .28);
-          background: linear-gradient(180deg, rgba(37, 99, 235, .10), rgba(37, 99, 235, .04));
+          border-color: var(--color-exchange-websea-border);
+          background: var(--color-bg-subtle);
+        }
+
+        .account-card.enabled {
+          background: var(--color-bg-container);
+        }
+
+        .account-card.gate.enabled {
+          background:
+            linear-gradient(180deg, rgba(35, 84, 230, .045), rgba(255, 255, 255, .92) 62%),
+            var(--color-bg-container);
+        }
+
+        .account-card.websea.enabled {
+          background:
+            linear-gradient(180deg, rgba(6, 200, 74, .045), rgba(255, 255, 255, .92) 62%),
+            var(--color-bg-container);
+        }
+
+        .account-card.gate::before,
+        .account-card.websea::before {
+          content: "";
+          position: absolute;
+          inset: 0 auto 0 0;
+          width: 4px;
+        }
+
+        .account-card.gate::before {
+          background: var(--color-exchange-gate);
+        }
+
+        .account-card.websea::before {
+          background: var(--color-exchange-websea);
         }
 
         .account-card.missing {
@@ -1452,6 +1636,33 @@ def inject_theme():
           margin: 0;
           box-shadow: none;
           border-radius: var(--radius-md);
+        }
+
+        .config-subsection {
+          margin-top: var(--space-24);
+        }
+
+        .config-subsection:first-child {
+          margin-top: var(--space-16);
+        }
+
+        .config-subsection-title {
+          color: var(--color-text);
+          font-size: .92rem;
+          line-height: 1.35;
+          font-weight: 740;
+          margin-bottom: var(--space-4);
+        }
+
+        .config-subsection-note {
+          color: var(--color-text-secondary);
+          font-size: .78rem;
+          line-height: 1.45;
+          margin-bottom: var(--space-12);
+        }
+
+        .config-subsection .ws-table-wrap {
+          margin-top: var(--space-8);
         }
 
         .unit-empty-action {
@@ -1841,10 +2052,23 @@ def inject_client_ui_script():
             });
           };
 
+          const scrollToHashAnchor = () => {
+            const hash = window.location.hash;
+            if (!hash || hash.length < 2) return;
+            const id = decodeURIComponent(hash.slice(1));
+            const anchor = document.getElementById(id);
+            if (!anchor) return;
+            anchor.scrollIntoView({ block: "start", behavior: "smooth" });
+          };
+
           window.__webseaApplyUiState = applyUiState;
           if (!window.__webseaUiStateBound) {
             window.__webseaUiStateBound = true;
             document.addEventListener("click", (event) => {
+              const hashLink = event.target.closest('a.metric-link[href*="#"]');
+              if (hashLink) {
+                setTimeout(scrollToHashAnchor, 120);
+              }
               const target = event.target.closest("[data-websea-action]");
               if (!target) return;
               event.preventDefault();
@@ -1863,8 +2087,10 @@ def inject_client_ui_script():
               childList: true,
               subtree: true,
             });
+            window.addEventListener("hashchange", () => setTimeout(scrollToHashAnchor, 120));
           }
           applyUiState();
+          setTimeout(scrollToHashAnchor, 180);
         })();
         </script>
         """,
@@ -1876,6 +2102,38 @@ def render_section(title, note=None):
     st.markdown(f'<div class="section-heading">{tr(title)}</div>', unsafe_allow_html=True)
     if note:
         st.markdown(f'<div class="section-note">{tr(note)}</div>', unsafe_allow_html=True)
+
+
+def render_config_subsection(title, note=None):
+    note_html = f'<div class="config-subsection-note">{esc(tr(note))}</div>' if note else ""
+    st.markdown(
+        (
+            '<div class="config-subsection">'
+            f'<div class="config-subsection-title">{esc(tr(title))}</div>'
+            f'{note_html}'
+            '</div>'
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_form_helper_note(text, compact=False):
+    class_name = "form-helper-note compact" if compact else "form-helper-note"
+    st.markdown(f'<div class="{class_name}">{esc(tr(text))}</div>', unsafe_allow_html=True)
+
+
+def render_param_help_label(label, help_text):
+    st.markdown(
+        f'<div class="param-help-label" data-tooltip="{esc(tr(help_text))}">{esc(tr(label))}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_field_helper_link(label, href):
+    st.markdown(
+        f'<a class="field-helper-link" href="{esc(href)}" target="_blank" rel="noopener noreferrer">{esc(tr(label))}</a>',
+        unsafe_allow_html=True,
+    )
 
 
 def esc(value):
@@ -2047,18 +2305,21 @@ def dashboard_metrics(accounts_data, strategy_data, global_data):
             "value": mode_label(global_data),
             "class": mode_cls,
             "help": tr("模拟运行中。当前配置默认不会真实下单。") if dry_run else tr("真实下单模式已开启。当前页面不会执行下单，但后端同步引擎可能会真实提交订单。"),
+            "href": page_href("原始配置"),
         },
         {
             "label": tr("配置检查"),
             "value": tr("阻断") if blocker_count else tr("正常"),
             "class": "danger" if blocker_count else "ok",
             "help": f"{blocker_count} blocker" if blocker_count else tr("启用策略账号的基础配置检查通过。"),
+            "href": page_href("分组总览") + "#system-status",
         },
         {
             "label": tr("运行健康"),
             "value": runtime_label,
             "class": "" if runtime_label == tr("未检测") else "ok",
             "help": tr("未发现运行日志") if runtime_label == tr("未检测") else tr("最近更新"),
+            "href": page_href("分组总览") + "#runtime-health",
         },
         {
             "label": tr("策略单元"),
@@ -2177,18 +2438,24 @@ def render_metric_band(metrics):
             value = item.get("value", "")
             cls = item.get("class", "")
             help_text = item.get("help", "")
+            href = item.get("href", "")
         else:
             label, value = item
             cls = ""
             help_text = ""
+            href = ""
         help_html = f'<div class="metric-help">{esc(help_text)}</div>' if help_text else ''
-        html.append(
+        tile_html = (
             f'<div class="metric-tile {cls}">'
             f'<div class="metric-label">{esc(label)}</div>'
             f'<div class="metric-value">{esc(value)}</div>'
             f'{help_html}'
             '</div>'
         )
+        if href:
+            html.append(f'<a class="metric-link" href="{esc(href)}" target="_self">{tile_html}</a>')
+        else:
+            html.append(tile_html)
     html.append('</div>')
     st.markdown("".join(html), unsafe_allow_html=True)
 
@@ -2296,10 +2563,8 @@ def default_unit(unit_name: str):
 
 
 def add_account(account_name: str, exchange: str, api_key: str, api_secret: str,
-                user_id: str = "", role: str = "sub", unit_name: str = "unit_1",
-                side: str = "source", ratio: str = "1"):
+                user_id: str = ""):
     accounts_data = load_json(ACCOUNTS_PATH)
-    strategy_data = load_json(STRATEGY_PATH)
     accounts = accounts_data.setdefault("accounts", {})
 
     if exchange == "gate":
@@ -2314,22 +2579,7 @@ def add_account(account_name: str, exchange: str, api_key: str, api_secret: str,
             "api_key": api_key, "api_secret": api_secret, "base_url": "https://oapi.websea.com"
         }
 
-    units = strategy_data.setdefault("units", [])
-    unit = next((u for u in units if u.get("name") == unit_name), None)
-    if unit is None:
-        unit = default_unit(unit_name)
-        units.append(unit)
-
-    if role == "master":
-        unit[side]["account"] = account_name
-        unit[side]["exchange"] = exchange
-    else:
-        followers = unit[side].setdefault("followers", [])
-        if not any(x.get("account") == account_name for x in followers):
-            followers.append({"account": account_name, "ratio": ratio or "1", "enabled": False})  # 默认不跟随
-
     save_json(ACCOUNTS_PATH, accounts_data)
-    save_json(STRATEGY_PATH, strategy_data)
 
 
 def update_follower_config(unit_name, leg_name, account_name, enabled, ratio):
@@ -2634,10 +2884,15 @@ def follower_side_fields(
         value=bool(existing.get("enabled", False)),
         key=f"{unit_name}_{leg_name}_follower_{idx}_enabled",
     )
+    render_param_help_label(
+        "跟随比例",
+        "子账户相对对应主账户的仓位跟随比例。Gate 子账户跟随 Gate Source 主账号，Websea 子账户跟随 Websea Hedge 主账号。",
+    )
     ratio = st.text_input(
         tr("跟随比例"),
         value=str(existing.get("ratio", "1")),
         key=f"{unit_name}_{leg_name}_follower_{idx}_ratio",
+        label_visibility="collapsed",
     )
     return {
         "account": account,
@@ -2725,7 +2980,7 @@ def render_follower_pair_editor(
     expanded_pair_index = st.session_state.get(expanded_key)
 
     st.markdown(f'<div class="follower-config-intro">{esc(tr("子账户配置"))}</div>', unsafe_allow_html=True)
-    st.caption(tr("点击新增后会同时添加一组 Gate 与 Websea 子账户。"))
+    st.caption(tr("每组子账户会分别跟随对应的主账户：Gate 子账户跟随 Gate Source 主账号，Websea 子账户跟随 Websea Hedge 主账号；启用后系统会按各自跟随比例同步目标仓位。"))
 
     if row_count == 0:
         st.caption(tr("暂无子账户对"))
@@ -3192,6 +3447,8 @@ def account_pair_card_html(exchange, member, unit_name):
         status_text = tr("未配置")
     status_class = "ok" if configured and enabled else "muted"
     card_class = f"account-card {exchange.lower()}"
+    if configured and enabled:
+        card_class += " enabled"
     if not configured:
         card_class += " missing"
     ratio_text = member["ratio"] if member["ratio"] else "-"
@@ -3464,31 +3721,37 @@ def main():
         render_section("策略单元", "按 Gate 与 Websea 的 master/sub 关系横向对齐展示，快速确认每个策略单元的账号、比例和启用状态。")
         render_strategy_unit_cards(strategy_data, accounts_data)
         render_section("实时账户信息", "按账号读取交易所余额和持仓。缺密钥或接口权限错误会直接显示在表格中。")
-        refresh_href = esc(app_href(live=datetime.now().strftime("%Y%m%d%H%M%S%f")))
-        live_account_requested = live_refresh_requested()
+        live_account_requested = bool(st.session_state.get("live_account_requested")) or live_refresh_requested()
+        live_account_placeholder = st.empty()
         if not live_account_requested:
-            st.markdown(
-                (
-                    '<div class="unit-empty-action">'
-                    '<div>'
-                    f'<div class="unit-empty-title">{esc(tr("尚未读取实时账户信息"))}</div>'
-                    f'<div class="unit-empty-copy">{esc(tr("点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。"))}</div>'
-                    '</div>'
-                    f'<a class="config-link-button" href="{refresh_href}" target="_self">{esc(tr("刷新"))}</a>'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
-        else:
+            with live_account_placeholder.container(border=True):
+                empty_copy, empty_action = st.columns([4, 1])
+                with empty_copy:
+                    st.markdown(
+                        (
+                            f'<div class="unit-empty-title">{esc(tr("尚未读取实时账户信息"))}</div>'
+                            f'<div class="unit-empty-copy">{esc(tr("点击“刷新实时账户信息”后，会在这里显示余额和持仓；读取失败的账号会直接显示错误原因。"))}</div>'
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                with empty_action:
+                    st.button(
+                        tr("刷新"),
+                        key="live_account_refresh_empty",
+                        use_container_width=True,
+                        on_click=request_live_account_refresh,
+                    )
+
+        if live_account_requested:
             with st.container(border=True):
-                st.markdown(
-                    (
-                        '<div class="live-account-toolbar">'
-                        f'<a class="config-link-button" href="{refresh_href}" target="_self">{esc(tr("刷新"))}</a>'
-                        '</div>'
-                    ),
-                    unsafe_allow_html=True,
-                )
+                toolbar_left, toolbar_right = st.columns([4, 1])
+                with toolbar_right:
+                    st.button(
+                        tr("刷新"),
+                        key="live_account_refresh_loaded",
+                        use_container_width=True,
+                        on_click=request_live_account_refresh,
+                    )
                 runtime_rows = []
                 position_rows = []
                 amount_index = build_contract_amount_index(strategy_data)
@@ -3548,6 +3811,7 @@ def main():
                 else:
                     st.info(tr("当前无持仓"))
 
+        st.markdown('<div id="system-status"></div>', unsafe_allow_html=True)
         render_section("系统状态", "后端同步引擎需单独运行。这里列出策略单元涉及的主账号和子账号配置检查；未启用的子账号会标记为 SKIP，不计为阻断。")
         checks = pd.DataFrame(preflight_rows(accounts_data, strategy_data))
         if not checks.empty and (checks["状态"] == "ERROR").any():
@@ -3558,11 +3822,11 @@ def main():
             render_empty("未检测", "当前没有可检测的策略账号。请先配置并启用策略单元。")
         else:
             render_table(checks)
+        st.markdown('<div id="runtime-health"></div>', unsafe_allow_html=True)
         render_section("运行健康", "用于判断同步引擎是否已经产生运行日志或状态文件。")
         render_table(log_health_row(global_data))
 
     if page == "账号管理":
-        render_metric_band(dashboard_metrics(accounts_data, strategy_data, global_data))
         accounts = accounts_data.get("accounts", {})
         render_section("账号列表", "密钥默认脱敏展示；替换密钥时在账号详情中输入新值。")
         render_table(account_display_rows(accounts_data))
@@ -3591,54 +3855,58 @@ def main():
                         st.success(tr("已保存"))
                         st.rerun()
                 with col2:
-                    confirm_delete = st.checkbox(tr("确认删除"), key=f"delete_confirm_{name}")
-                    if confirm_delete:
-                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
-                    if st.button(tr("删除账号"), key=f"delete_{name}", disabled=not confirm_delete):
+                    delete_confirm_key = f"delete_confirm_{name}"
+                    confirm_delete_state = bool(st.session_state.get(delete_confirm_key, False))
+                    if st.button(tr("删除账号"), key=f"delete_{name}", disabled=not confirm_delete_state):
                         accounts.pop(name, None)
                         remove_account_references(strategy_data, name)
                         save_json(ACCOUNTS_PATH, accounts_data)
                         save_json(STRATEGY_PATH, strategy_data)
                         st.success(tr("已删除账号并清理策略引用"))
                         st.rerun()
+                    confirm_delete = st.checkbox(tr("确认删除"), key=delete_confirm_key)
+                    if confirm_delete:
+                        render_danger_panel("危险操作区", "该区域会修改敏感配置，请确认后再保存。")
 
     if page == "新增账号":
-        render_section("新增账号", "新账号会写入 accounts.json，并按选择挂载到指定策略单元。")
-        st.info(tr("密钥默认脱敏展示；替换密钥时在账号详情中输入新值。"))
+        render_section("新增账号", "新账号只会写入 accounts.json，不会自动挂载到策略单元。请在策略配置中手动选择账号。")
+        exchange = st.selectbox(tr("交易所"), ["gate", "websea"], key="add_account_exchange")
         with st.form("add_account_form"):
             account_name = st.text_input(tr("账号名称"))
-            exchange = st.selectbox(tr("交易所"), ["gate", "websea"])
-            role = st.selectbox(tr("角色"), ["master", "sub"])
+            user_id = ""
+            if exchange == "gate":
+                user_id = st.text_input("Gate User ID")
+            fixed_side = "source" if exchange == "gate" else "hedge"
+            fixed_side_help = "Gate 账号固定作为 source。" if exchange == "gate" else "Websea 账号固定作为 hedge。"
+            st.text_input(tr("主/跟随"), value=fixed_side, disabled=True, help=tr(fixed_side_help))
             api_key = st.text_input("API Key / Token", type="password")
             api_secret = st.text_input("API Secret", type="password")
-            user_id = st.text_input("Gate User ID")
-            unit_name = st.text_input(tr("策略单元名称"), "unit_1")
-            side = st.selectbox(tr("主/跟随"), ["source", "hedge"])
-            ratio = st.text_input(tr("比例"), "1")
+            api_key_url = (
+                "https://www.gate.com/zh/myaccount/profile/api-key/save"
+                if exchange == "gate"
+                else "https://www.websea.com/zh-CN/userCenter/apiPort"
+            )
+            render_field_helper_link("获取 API Key 和 API Secret", api_key_url)
             submitted = st.form_submit_button(tr("新增账号"))
             if submitted:
                 try:
                     if not account_name.strip():
                         raise ValueError(tr("账号名称不能为空"))
-                    validate_decimal_text(ratio, tr("比例"))
                     add_account(
                         account_name.strip(),
                         exchange,
                         api_key.strip(),
                         api_secret.strip(),
                         user_id=user_id.strip(),
-                        role=role,
-                        unit_name=unit_name.strip() or "unit_1",
-                        side=side,
-                        ratio=ratio,
                     )
                     st.success(tr("新增成功"))
                     st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
+        render_form_helper_note("密钥默认脱敏展示；替换密钥时在账号详情中输入新值。")
 
     if page == "策略配置":
-        render_section("策略单元配置", "策略单元定义 Gate source 与 Websea hedge 的主从关系。")
+        render_section("策略单元说明", "策略单元用于定义一组 Gate source 与 Websea hedge 的对应关系，包括主账号、对冲方向、比例、杠杆、保证金模式和 follower 列表。")
         gate_accounts = account_names(accounts_data, "gate")
         websea_accounts = account_names(accounts_data, "websea")
         pending_target_unit = str(st.session_state.get("pending_strategy_unit_target") or "").strip()
@@ -3698,13 +3966,16 @@ def main():
                             value=int(source.get("leverage") or 10),
                             key=f"{unit.get('name')}_source_leverage",
                         )
+                        render_param_help_label("Source 保证金模式", "Gate Source 主账号下单时使用的保证金模式。cross 为全仓，isolated 为逐仓。")
                         source_margin_mode = st.selectbox(
                             tr("Source 保证金模式"),
                             ["cross", "isolated"],
                             index=select_index(["cross", "isolated"], source.get("margin_mode", "cross")),
                             key=f"{unit.get('name')}_source_margin",
+                            label_visibility="collapsed",
                         )
-                        source_settle = st.text_input("Source settle", value=source.get("settle", "usdt"), key=f"{unit.get('name')}_source_settle")
+                        source_settle = "usdt"
+                        st.text_input("Source settle", value="USDT", disabled=True, key=f"{unit.get('name')}_source_settle")
                     with col2:
                         st.markdown("#### Hedge / Websea")
                         hedge_accounts = select_options_with_empty(websea_accounts, hedge.get("account"))
@@ -3716,13 +3987,21 @@ def main():
                             key=f"{unit.get('name')}_hedge_account",
                         )
                         render_no_available_account_link(hedge_accounts)
+                        render_param_help_label("Hedge 模式", "决定 Websea Hedge 如何跟随 Gate Source。opposite 为反向对冲，same 为同向跟随。")
                         hedge_mode = st.selectbox(
                             tr("Hedge 模式"),
                             ["opposite", "same"],
                             index=select_index(["opposite", "same"], hedge.get("mode", "opposite")),
                             key=f"{unit.get('name')}_hedge_mode",
+                            label_visibility="collapsed",
                         )
-                        hedge_ratio = st.text_input(tr("Hedge 比例"), value=str(hedge.get("ratio", "1")), key=f"{unit.get('name')}_hedge_ratio")
+                        render_param_help_label("Hedge 比例", "Websea Hedge 相对 Gate Source 的仓位换算比例，用于控制对冲敞口大小。")
+                        hedge_ratio = st.text_input(
+                            tr("Hedge 比例"),
+                            value=str(hedge.get("ratio", "1")),
+                            key=f"{unit.get('name')}_hedge_ratio",
+                            label_visibility="collapsed",
+                        )
                         hedge_leverage = st.number_input(
                             tr("Hedge 杠杆"),
                             min_value=1,
@@ -3730,11 +4009,13 @@ def main():
                             value=int(hedge.get("leverage") or 10),
                             key=f"{unit.get('name')}_hedge_leverage",
                         )
+                        render_param_help_label("Hedge 保证金模式", "Websea Hedge 主账号下单时使用的保证金模式。cross 为全仓，isolated 为逐仓。")
                         hedge_margin_mode = st.selectbox(
                             tr("Hedge 保证金模式"),
                             ["cross", "isolated"],
                             index=select_index(["cross", "isolated"], hedge.get("margin_mode", "cross")),
                             key=f"{unit.get('name')}_hedge_margin",
+                            label_visibility="collapsed",
                         )
 
                 edited_source_followers, edited_hedge_followers = render_follower_pair_editor(
@@ -3758,7 +4039,7 @@ def main():
                             source.update({
                                 "account": source_account,
                                 "exchange": "gate",
-                                "settle": source_settle.strip() or "usdt",
+                                "settle": source_settle,
                                 "leverage": int(source_leverage),
                                 "margin_mode": source_margin_mode,
                             })
@@ -3837,117 +4118,120 @@ def main():
         if not units:
             st.info(tr("还没有策略单元"))
         else:
-            unit_names = [u.get("name") for u in units]
-            target_unit_name = requested_unit_name()
-            selected_unit_name = st.selectbox(
-                tr("策略单元"),
-                unit_names,
-                index=select_index(unit_names, target_unit_name or unit_names[0]),
-            )
-            unit = next(u for u in units if u.get("name") == selected_unit_name)
-            symbols = unit.setdefault("symbols", [])
-
-            render_section("自动新增交易对", "只填写 Gate source_symbol，系统会自动推导 Websea 交易对并补齐 ratio、合约面值和基础风控参数。")
-            source_settle = unit.get("source", {}).get("settle", "usdt")
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                new_source_symbol = st.text_input(
-                    "Source Symbol",
-                    value="",
-                    placeholder=tr("例如 BTC_USDT"),
-                    key=f"{selected_unit_name}_auto_source_symbol",
+            with st.container(border=True):
+                unit_names = [u.get("name") for u in units]
+                target_unit_name = requested_unit_name()
+                selected_unit_name = st.selectbox(
+                    tr("策略单元"),
+                    unit_names,
+                    index=select_index(unit_names, target_unit_name or unit_names[0]),
                 )
-            with col2:
-                st.text_input("Gate settle", value=source_settle, disabled=True, key=f"{selected_unit_name}_auto_settle")
+                unit = next(u for u in units if u.get("name") == selected_unit_name)
+                symbols = unit.setdefault("symbols", [])
 
-            if st.button(tr("自动获取并新增"), type="primary"):
-                try:
-                    auto_result = auto_symbol_config(new_source_symbol, source_settle)
-                    new_item = auto_result["config"]
-                    symbols = [
-                        item for item in symbols
-                        if item.get("source_symbol") != new_item["source_symbol"]
-                    ]
-                    symbols.append(new_item)
-                    unit["symbols"] = symbols
-                    save_json(STRATEGY_PATH, strategy_data)
-                    for warning in auto_result["warnings"]:
-                        st.warning(warning)
-                    st.success(
-                        f"{tr('新增成功')} {new_item['source_symbol']} -> {new_item['hedge_symbol']}，"
-                        f"ratio={new_item['ratio']}"
+                render_config_subsection("自动新增交易对", "只填写 Gate source_symbol，系统会自动推导 Websea 交易对并补齐 ratio、合约面值和基础风控参数。")
+                source_settle = unit.get("source", {}).get("settle", "usdt")
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    new_source_symbol = st.text_input(
+                        "Source Symbol",
+                        value="",
+                        placeholder=tr("例如 BTC_USDT"),
+                        key=f"{selected_unit_name}_auto_source_symbol",
                     )
-                    st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+                with col2:
+                    st.text_input("Gate settle", value=source_settle, disabled=True, key=f"{selected_unit_name}_auto_settle")
 
-            render_section("当前交易对")
-            if symbols:
-                summary_cols = [
-                    "source_symbol", "hedge_symbol", "enabled", "ratio",
-                    "source_amount_multiplier", "hedge_amount_multiplier",
-                    "min_sync_delta",
-                ]
-                summary_df = pd.DataFrame(symbols)
-                visible_summary_cols = [col for col in summary_cols if col in summary_df.columns]
-                render_table(
-                    summary_df[visible_summary_cols].rename(columns={
-                        "source_symbol": "Gate合约",
-                        "hedge_symbol": "Websea合约",
-                        "enabled": "启用",
-                        "ratio": "同步比例",
-                        "source_amount_multiplier": "Gate面值",
-                        "hedge_amount_multiplier": "Websea面值",
-                        "min_sync_delta": "最小同步差",
-                    })
-                )
-            else:
-                st.info(tr("当前策略单元还没有交易对"))
-
-            with st.expander(tr("高级参数编辑"), expanded=False):
-                st.caption(tr("维护交易对映射、数量换算比例、步进和风控阈值。"))
-                edited_symbols = st.data_editor(
-                    pd.DataFrame(symbols),
-                    num_rows="dynamic",
-                    width="stretch",
-                    key=f"{selected_unit_name}_symbols_editor",
-                )
-
-                if st.button(tr("保存交易对配置")):
+                if st.button(tr("自动获取并新增"), type="primary"):
                     try:
-                        unit["symbols"] = normalize_symbol_rows(edited_symbols.to_dict("records"))
+                        auto_result = auto_symbol_config(new_source_symbol, source_settle)
+                        new_item = auto_result["config"]
+                        symbols = [
+                            item for item in symbols
+                            if item.get("source_symbol") != new_item["source_symbol"]
+                        ]
+                        symbols.append(new_item)
+                        unit["symbols"] = symbols
                         save_json(STRATEGY_PATH, strategy_data)
-                        st.success(tr("交易对配置已保存"))
+                        for warning in auto_result["warnings"]:
+                            st.warning(warning)
+                        st.success(
+                            f"{tr('新增成功')} {new_item['source_symbol']} -> {new_item['hedge_symbol']}，"
+                            f"ratio={new_item['ratio']}"
+                        )
                         st.rerun()
                     except Exception as exc:
                         st.error(str(exc))
+
+                render_config_subsection("当前交易对")
+                if symbols:
+                    summary_cols = [
+                        "source_symbol", "hedge_symbol", "enabled", "ratio",
+                        "source_amount_multiplier", "hedge_amount_multiplier",
+                        "min_sync_delta",
+                    ]
+                    summary_df = pd.DataFrame(symbols)
+                    visible_summary_cols = [col for col in summary_cols if col in summary_df.columns]
+                    render_table(
+                        summary_df[visible_summary_cols].rename(columns={
+                            "source_symbol": "Gate合约",
+                            "hedge_symbol": "Websea合约",
+                            "enabled": "启用",
+                            "ratio": "同步比例",
+                            "source_amount_multiplier": "Gate面值",
+                            "hedge_amount_multiplier": "Websea面值",
+                            "min_sync_delta": "最小同步差",
+                        })
+                    )
+                else:
+                    st.info(tr("当前策略单元还没有交易对"))
+
+                with st.expander(tr("高级参数编辑"), expanded=False):
+                    st.caption(tr("维护交易对映射、数量换算比例、步进和风控阈值。"))
+                    edited_symbols = st.data_editor(
+                        pd.DataFrame(symbols),
+                        num_rows="dynamic",
+                        width="stretch",
+                        key=f"{selected_unit_name}_symbols_editor",
+                    )
+
+                    if st.button(tr("保存交易对配置")):
+                        try:
+                            unit["symbols"] = normalize_symbol_rows(edited_symbols.to_dict("records"))
+                            save_json(STRATEGY_PATH, strategy_data)
+                            st.success(tr("交易对配置已保存"))
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(str(exc))
 
     if page == "原始配置":
         render_section("运行配置", "常用运行参数可以在这里直接保存；更完整配置可在下方 JSON 编辑区修改。")
         if not bool(global_data.get("dry_run", True)):
             render_danger_panel("真实下单", "真实下单模式已开启。当前页面不会执行下单，但保存配置可能影响后端同步引擎。")
-        dry_run = st.checkbox("dry_run", value=bool(global_data.get("dry_run", True)))
-        max_concurrent = st.number_input(
-            "max_concurrent_adjustments",
-            min_value=1,
-            max_value=200,
-            value=int(global_data.get("max_concurrent_adjustments", 20)),
-        )
-        state_file = st.text_input("state_file", value=global_data.get("state_file", "logs/state.json"))
-        alert_cooldown = st.number_input(
-            "alert_cooldown_sec",
-            min_value=1,
-            max_value=3600,
-            value=int(global_data.get("alert_cooldown_sec", 60)),
-        )
-        if st.button(tr("保存运行配置")):
-            global_data["dry_run"] = bool(dry_run)
-            global_data["max_concurrent_adjustments"] = int(max_concurrent)
-            global_data["state_file"] = state_file.strip() or "logs/state.json"
-            global_data["alert_cooldown_sec"] = int(alert_cooldown)
-            save_json(GLOBAL_PATH, global_data)
-            st.success(tr("运行配置已保存"))
-            st.rerun()
+        with st.container(border=True):
+            dry_run = st.checkbox("dry_run", value=bool(global_data.get("dry_run", True)))
+            render_form_helper_note("开启 dry_run 时只模拟下单并记录请求；关闭后端同步引擎可能真实提交订单。", compact=True)
+            max_concurrent = st.number_input(
+                "max_concurrent_adjustments",
+                min_value=1,
+                max_value=200,
+                value=int(global_data.get("max_concurrent_adjustments", 20)),
+            )
+            state_file = st.text_input("state_file", value=global_data.get("state_file", "logs/state.json"))
+            alert_cooldown = st.number_input(
+                "alert_cooldown_sec",
+                min_value=1,
+                max_value=3600,
+                value=int(global_data.get("alert_cooldown_sec", 60)),
+            )
+            if st.button(tr("保存运行配置")):
+                global_data["dry_run"] = bool(dry_run)
+                global_data["max_concurrent_adjustments"] = int(max_concurrent)
+                global_data["state_file"] = state_file.strip() or "logs/state.json"
+                global_data["alert_cooldown_sec"] = int(alert_cooldown)
+                save_json(GLOBAL_PATH, global_data)
+                st.success(tr("运行配置已保存"))
+                st.rerun()
 
         render_section("状态文件")
         state_path = Path(global_data.get("state_file", "logs/state.json"))

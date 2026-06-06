@@ -94,6 +94,8 @@ docs/iteration/
 - `accounts.json`：所有账号和密钥
 - `strategy_config.json`：策略单元、主从关系、交易对规则
 
+新增账号页面只写入 `accounts.json`：Gate 账号固定作为 `source`，Websea 账号固定作为 `hedge`，不会自动挂载到策略单元；账号加入主账号或 follower 关系需要在“策略配置”中手动选择。
+
 ### strategy_config 的核心概念
 
 每个 unit 只有两条腿：
