@@ -2005,6 +2005,28 @@ def inject_theme():
           border-radius: 8px;
         }
 
+        div[data-testid="stForm"],
+        html body .stApp div[data-testid="stForm"],
+        div[data-testid="stLayoutWrapper"] > div[data-testid="stVerticalBlock"],
+        html body .stApp div[data-testid="stLayoutWrapper"] > div[data-testid="stVerticalBlock"] {
+          border: 1px solid var(--color-border) !important;
+          border-radius: var(--radius-lg) !important;
+          background: var(--color-bg-container) !important;
+          background-color: var(--color-bg-container) !important;
+          box-shadow: var(--shadow-card) !important;
+          padding: var(--space-24) !important;
+          margin: var(--space-16) 0 var(--space-24) !important;
+        }
+
+        div[data-testid="stForm"] > div[data-testid="stVerticalBlock"],
+        html body .stApp div[data-testid="stForm"] > div[data-testid="stVerticalBlock"] {
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
         div[data-testid="stCheckbox"] input[type="checkbox"] {
           accent-color: var(--color-primary) !important;
         }
@@ -2112,17 +2134,76 @@ def inject_theme():
           color: inherit !important;
         }
 
-        div[data-testid="stNumberInput"] button,
-        div[data-testid="stNumberInput"] button[kind],
-        div[data-testid="stNumberInput"] button[data-testid^="stBaseButton"] {
-          background: var(--color-bg-container) !important;
-          border-color: var(--color-border-strong) !important;
-          color: var(--color-text) !important;
+        div[data-testid="stTextInput"] button,
+        div[data-testid="stTextInput"] button[kind],
+        div[data-testid="stTextInput"] button[data-testid^="stBaseButton"] {
+          min-width: 44px !important;
+          width: 44px !important;
+          border-radius: 0 6px 6px 0 !important;
+          border: 0 !important;
+          border-left: 1px solid var(--color-border-strong) !important;
+          background: var(--color-bg-subtle) !important;
+          color: var(--color-text-tertiary) !important;
           box-shadow: none !important;
         }
 
-        div[data-testid="stNumberInput"] button:hover,
-        div[data-testid="stNumberInput"] button[kind]:hover {
+        div[data-testid="stTextInput"] button *,
+        div[data-testid="stTextInput"] button svg {
+          color: inherit !important;
+          fill: currentColor !important;
+          stroke: currentColor !important;
+        }
+
+        div[data-baseweb="input"] {
+          border: 1px solid var(--color-border-strong) !important;
+          border-radius: 6px !important;
+          background: var(--color-bg-container) !important;
+          background-color: var(--color-bg-container) !important;
+          color: var(--color-text) !important;
+          overflow: hidden !important;
+        }
+
+        div[data-baseweb="input"]:focus-within {
+          border-color: var(--color-primary) !important;
+          box-shadow: 0 0 0 1px var(--color-primary) !important;
+        }
+
+        div[data-baseweb="input"] > div {
+          background: var(--color-bg-container) !important;
+          background-color: var(--color-bg-container) !important;
+          color: var(--color-text) !important;
+        }
+
+        div[data-baseweb="input"] input {
+          background: transparent !important;
+          color: var(--color-text) !important;
+        }
+
+        div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepDown"],
+        div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepUp"] {
+          min-width: 40px !important;
+          width: 40px !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+          border: 0 !important;
+          border-left: 1px solid var(--color-border-strong) !important;
+          background: var(--color-bg-subtle) !important;
+          color: var(--color-text) !important;
+          box-shadow: none !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          line-height: 1 !important;
+        }
+
+        div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepUp"] {
+          border-radius: 0 6px 6px 0 !important;
+        }
+
+        div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepDown"]:hover,
+        div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepUp"]:hover {
           background: var(--color-primary-bg) !important;
           border-color: var(--color-primary) !important;
           color: var(--color-primary-text) !important;
