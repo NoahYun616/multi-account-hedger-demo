@@ -2374,6 +2374,47 @@ def inject_theme():
           color: var(--color-text-secondary);
         }
 
+        :root[data-websea-theme="dark"] .account-card {
+          background: #111827;
+          border-color: var(--color-border-strong);
+        }
+
+        :root[data-websea-theme="dark"] .account-card.enabled {
+          background: #0F172A;
+        }
+
+        :root[data-websea-theme="dark"] .account-card.gate {
+          border-color: rgba(99, 102, 241, .62);
+          background: #101827;
+        }
+
+        :root[data-websea-theme="dark"] .account-card.websea {
+          border-color: rgba(52, 211, 153, .62);
+          background: #101827;
+        }
+
+        :root[data-websea-theme="dark"] .account-card.gate.enabled {
+          background:
+            linear-gradient(180deg, rgba(35, 84, 230, .16), rgba(15, 23, 42, .98) 68%),
+            #0F172A;
+          border-color: rgba(129, 140, 248, .78);
+        }
+
+        :root[data-websea-theme="dark"] .account-card.websea.enabled {
+          background:
+            linear-gradient(180deg, rgba(6, 200, 74, .14), rgba(15, 23, 42, .98) 68%),
+            #0F172A;
+          border-color: rgba(110, 231, 183, .78);
+        }
+
+        :root[data-websea-theme="dark"] a.account-card-link:hover .account-card.gate {
+          box-shadow: 0 10px 28px rgba(35, 84, 230, .18);
+        }
+
+        :root[data-websea-theme="dark"] a.account-card-link:hover .account-card.websea {
+          box-shadow: 0 10px 28px rgba(6, 200, 74, .16);
+        }
+
         :root[data-websea-sidebar="collapsed"] section[data-testid="stSidebar"] {
           width: 0 !important;
           min-width: 0 !important;
