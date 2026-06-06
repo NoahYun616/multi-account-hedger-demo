@@ -2134,11 +2134,11 @@ def inject_theme():
           color: inherit !important;
         }
 
-        div[data-testid="stTextInput"] button,
-        div[data-testid="stTextInput"] button[kind],
-        div[data-testid="stTextInput"] button[data-testid^="stBaseButton"] {
+        div[data-testid="stTextInput"] button[aria-label="Show password text"],
+        div[data-testid="stTextInput"] button[aria-label="Hide password text"] {
           min-width: 44px !important;
           width: 44px !important;
+          height: 100% !important;
           border-radius: 0 6px 6px 0 !important;
           border: 0 !important;
           border-left: 1px solid var(--color-border-strong) !important;
@@ -2147,11 +2147,33 @@ def inject_theme():
           box-shadow: none !important;
         }
 
-        div[data-testid="stTextInput"] button *,
-        div[data-testid="stTextInput"] button svg {
+        div[data-testid="stTextInput"] button[aria-label="Show password text"] *,
+        div[data-testid="stTextInput"] button[aria-label="Show password text"] svg,
+        div[data-testid="stTextInput"] button[aria-label="Hide password text"] *,
+        div[data-testid="stTextInput"] button[aria-label="Hide password text"] svg {
           color: inherit !important;
           fill: currentColor !important;
           stroke: currentColor !important;
+        }
+
+        div[data-testid="stTextInput"] button[aria-label^="Help for"] {
+          width: 18px !important;
+          min-width: 18px !important;
+          height: 18px !important;
+          min-height: 18px !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border: 1px solid var(--color-border-strong) !important;
+          border-radius: 999px !important;
+          background: var(--color-bg-container) !important;
+          color: var(--color-text-tertiary) !important;
+          box-shadow: none !important;
+        }
+
+        div[data-testid="stTextInput"] button[aria-label^="Help for"]:hover {
+          border-color: var(--color-primary) !important;
+          color: var(--color-primary-text) !important;
+          background: var(--color-primary-bg) !important;
         }
 
         div[data-baseweb="input"] {
@@ -2177,6 +2199,18 @@ def inject_theme():
         div[data-baseweb="input"] input {
           background: transparent !important;
           color: var(--color-text) !important;
+        }
+
+        div[data-baseweb="input"] input:disabled {
+          color: var(--color-text) !important;
+          -webkit-text-fill-color: var(--color-text) !important;
+          opacity: 1 !important;
+        }
+
+        div[data-baseweb="input"] input::placeholder {
+          color: var(--color-text-tertiary) !important;
+          -webkit-text-fill-color: var(--color-text-tertiary) !important;
+          opacity: 1 !important;
         }
 
         div[data-testid="stNumberInput"] button[data-testid="stNumberInputStepDown"],
