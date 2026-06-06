@@ -1911,10 +1911,25 @@ def inject_theme():
           border-radius: var(--radius-lg);
           background: var(--color-bg-container);
           box-shadow: var(--shadow-card);
+          overflow: hidden;
         }
 
         div[data-testid="stExpander"] details summary {
+          min-height: 48px;
+          background: var(--color-bg-container) !important;
+          color: var(--color-text) !important;
           font-weight: 700;
+        }
+
+        div[data-testid="stExpander"] details summary:hover {
+          background: var(--color-bg-subtle) !important;
+        }
+
+        div[data-testid="stExpander"] details summary *,
+        div[data-testid="stExpander"] details summary svg {
+          color: var(--color-text) !important;
+          fill: var(--color-text) !important;
+          stroke: var(--color-text) !important;
         }
 
         div[data-testid="stExpander"] details[open] > summary .follower-pair-summary-accounts {
@@ -1990,25 +2005,76 @@ def inject_theme():
           border-radius: 8px;
         }
 
+        div[data-testid="stCheckbox"] input[type="checkbox"] {
+          accent-color: var(--color-primary) !important;
+        }
+
+        div[data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span,
+        .stCheckbox label[data-baseweb="checkbox"] > span,
+        html body .stApp div[data-testid="stCheckbox"] label[data-baseweb="checkbox"] > span {
+          background: var(--color-bg-container) !important;
+          background-color: var(--color-bg-container) !important;
+          border-color: var(--color-border-strong) !important;
+          box-shadow: inset 0 0 0 1px var(--color-border-strong) !important;
+        }
+
+        div[data-testid="stCheckbox"] label[data-baseweb="checkbox"]:has(input:checked) > span,
+        div[data-testid="stCheckbox"] label[data-baseweb="checkbox"]:has(input[aria-checked="true"]) > span,
+        .stCheckbox label[data-baseweb="checkbox"]:has(input:checked) > span,
+        html body .stApp div[data-testid="stCheckbox"] label[data-baseweb="checkbox"]:has(input:checked) > span,
+        html body .stApp div[data-testid="stCheckbox"] label[data-baseweb="checkbox"]:has(input[aria-checked="true"]) > span {
+          background: var(--color-primary) !important;
+          background-color: var(--color-primary) !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: inset 0 0 0 1px var(--color-primary) !important;
+        }
+
+        div[data-testid="stCheckbox"] [data-baseweb="checkbox"] > div,
+        .stCheckbox [data-baseweb="checkbox"] > div {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        div[data-testid="stCheckbox"] [data-baseweb="checkbox"] input:checked + div,
+        .stCheckbox [data-baseweb="checkbox"] input:checked + div {
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        div[data-testid="stCheckbox"] svg,
+        .stCheckbox svg {
+          color: #ffffff !important;
+          fill: #ffffff !important;
+          stroke: #ffffff !important;
+        }
+
         .stButton > button,
         .stDownloadButton > button,
-        button[kind="primary"] {
+        button[kind="primary"],
+        button[kind="secondary"],
+        button[kind="secondaryFormSubmit"] {
           border-radius: 6px;
           border: 1px solid var(--color-border-strong);
-          background: var(--color-bg-container);
-          color: var(--color-text);
-          box-shadow: none;
+          background: var(--color-bg-container) !important;
+          color: var(--color-text) !important;
+          box-shadow: none !important;
           font-weight: 650;
         }
 
         .stButton > button *,
-        .stDownloadButton > button * {
+        .stDownloadButton > button *,
+        button[kind="secondary"] *,
+        button[kind="secondaryFormSubmit"] * {
           color: inherit !important;
         }
 
-        .stButton > button:hover {
-          border-color: var(--color-primary);
-          color: var(--color-primary);
+        .stButton > button:hover,
+        .stDownloadButton > button:hover,
+        button[kind="secondary"]:hover,
+        button[kind="secondaryFormSubmit"]:hover {
+          border-color: var(--color-primary) !important;
+          color: var(--color-primary-text) !important;
+          background: var(--color-primary-bg) !important;
         }
 
         button[kind="primary"] {
@@ -2021,12 +2087,70 @@ def inject_theme():
           color: #ffffff !important;
         }
 
+        .stButton > button:disabled,
+        .stDownloadButton > button:disabled,
+        button[kind="secondary"]:disabled,
+        button[kind="secondaryFormSubmit"]:disabled,
+        button[data-testid="stBaseButton-secondary"][disabled],
+        button[data-testid="stBaseButton-secondaryFormSubmit"][disabled],
+        html body .stApp button[data-testid="stBaseButton-secondary"][kind="secondary"][disabled],
+        html body .stApp button[data-testid="stBaseButton-secondaryFormSubmit"][kind="secondaryFormSubmit"][disabled] {
+          background: var(--color-bg-subtle) !important;
+          background-color: var(--color-bg-subtle) !important;
+          border-color: var(--color-border-strong) !important;
+          color: var(--color-text-tertiary) !important;
+          opacity: 1 !important;
+          cursor: not-allowed !important;
+        }
+
+        .stButton > button:disabled *,
+        .stDownloadButton > button:disabled *,
+        button[kind="secondary"]:disabled *,
+        button[kind="secondaryFormSubmit"]:disabled *,
+        button[data-testid="stBaseButton-secondary"][disabled] *,
+        button[data-testid="stBaseButton-secondaryFormSubmit"][disabled] * {
+          color: inherit !important;
+        }
+
+        div[data-testid="stNumberInput"] button,
+        div[data-testid="stNumberInput"] button[kind],
+        div[data-testid="stNumberInput"] button[data-testid^="stBaseButton"] {
+          background: var(--color-bg-container) !important;
+          border-color: var(--color-border-strong) !important;
+          color: var(--color-text) !important;
+          box-shadow: none !important;
+        }
+
+        div[data-testid="stNumberInput"] button:hover,
+        div[data-testid="stNumberInput"] button[kind]:hover {
+          background: var(--color-primary-bg) !important;
+          border-color: var(--color-primary) !important;
+          color: var(--color-primary-text) !important;
+        }
+
+        div[data-testid="stNumberInput"] button *,
+        div[data-testid="stNumberInput"] button svg {
+          color: inherit !important;
+          fill: currentColor !important;
+          stroke: currentColor !important;
+        }
+
         div[data-baseweb="input"] > div,
         div[data-baseweb="select"] > div,
         textarea {
           border-radius: 6px !important;
           color: var(--color-text) !important;
           background: var(--color-bg-container) !important;
+        }
+
+        div[data-baseweb="select"] svg,
+        div[data-baseweb="select"] svg[data-baseweb="icon"],
+        div[data-baseweb="select"] [role="button"],
+        html body .stApp div[data-baseweb="select"] svg[data-baseweb="icon"],
+        html body .stApp div[data-baseweb="select"] svg[data-baseweb="icon"] path {
+          color: var(--color-text-tertiary) !important;
+          fill: var(--color-text-tertiary) !important;
+          stroke: var(--color-text-tertiary) !important;
         }
 
         input,
