@@ -1,29 +1,7 @@
 {
   "units": [
     {
-      "name": "q1",
-      "enabled": true,
-      "source": {
-        "account": "",
-        "exchange": "gate",
-        "settle": "usdt",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "hedge": {
-        "account": "",
-        "exchange": "websea",
-        "mode": "opposite",
-        "ratio": "1",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "symbols": []
-    },
-    {
-      "name": "unit_1",
+      "name": "T1",
       "enabled": true,
       "source": {
         "account": "g1",
@@ -31,62 +9,47 @@
         "settle": "usdt",
         "leverage": 10,
         "margin_mode": "cross",
-        "followers": []
+        "followers": [
+          {
+            "account": "gate2",
+            "ratio": "3",
+            "enabled": false
+          }
+        ]
       },
       "hedge": {
-        "account": "",
+        "account": "websea1",
         "exchange": "websea",
         "mode": "opposite",
         "ratio": "1",
         "leverage": 10,
         "margin_mode": "cross",
-        "followers": []
+        "followers": [
+          {
+            "account": "websea2",
+            "ratio": "1",
+            "enabled": true
+          }
+        ]
       },
-      "symbols": []
-    },
-    {
-      "name": "q2",
-      "enabled": true,
-      "source": {
-        "account": "",
-        "exchange": "gate",
-        "settle": "usdt",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "hedge": {
-        "account": "",
-        "exchange": "websea",
-        "mode": "opposite",
-        "ratio": "1",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "symbols": []
-    },
-    {
-      "name": "q4",
-      "enabled": true,
-      "source": {
-        "account": "",
-        "exchange": "gate",
-        "settle": "usdt",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "hedge": {
-        "account": "",
-        "exchange": "websea",
-        "mode": "opposite",
-        "ratio": "1",
-        "leverage": 10,
-        "margin_mode": "cross",
-        "followers": []
-      },
-      "symbols": []
+      "symbols": [
+        {
+          "source_symbol": "BTC_USDT",
+          "hedge_symbol": "BTC-USDT",
+          "enabled": true,
+          "ratio": "0.1",
+          "source_amount_multiplier": "0.0001",
+          "hedge_amount_multiplier": "0.001",
+          "min_sync_delta": "1",
+          "source_step": "1",
+          "hedge_step": "1",
+          "source_min_qty": "1",
+          "hedge_min_qty": "1",
+          "max_source_pos": "99999999",
+          "max_hedge_pos": "99999999",
+          "max_adjust_qty": "99999999"
+        }
+      ]
     }
   ]
 }
