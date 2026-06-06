@@ -30,7 +30,7 @@ docs/iteration/
 
 每次对工具进行功能优化、配置变更、启动方式变更、风控逻辑变更或接口依赖变更后，都需要同步更新本 README。
 
-前端页面和交互调整需先参考项目根目录 `docs/design-system/`，并结合本工具内 `docs/iteration/frontend_style_guide.md`。新增页面、布局调整、状态标签、告警展示和危险操作都应保持一致。
+前端页面和交互调整需先参考本工具内 `docs/design-system/`，并结合 `docs/iteration/frontend_style_guide.md`。新增页面、布局调整、状态标签、告警展示和危险操作都应保持一致。
 
 当前前端已按项目 Design System 完成一版规范化重构：统一 Design Token、浅色 SaaS 后台布局、侧边栏导航职责、页头状态层级、四张核心 KPI 卡片、表格与空状态样式。本次改造未新增业务功能，也未修改同步/下单逻辑。
 
